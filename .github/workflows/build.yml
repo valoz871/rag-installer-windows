@@ -1,0 +1,32 @@
+name: Compila EXE
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Scarica codice
+      uses: actions/checkout@v4
+    
+    - name: Setup Python  
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Installa dipendenze
+      run: |
+        pip install pyinstaller Pillow
+    
+    - name: Compila EXE
+      run: |
+        pyinstaller --onefile --windowed --name "RAG_Psicologia_Installer" smart_installer.py
+    
+    - name: Upload EXE
+      uses: actions/upload-artifact@v3
+      with:
+        name: RAG-Installer-EXE
+        path: dist/RAG_Psicologia_Installer.exe

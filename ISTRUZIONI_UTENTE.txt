@@ -1,0 +1,45 @@
+🧠 SISTEMA RAG PSICOLOGIA - GUIDA RAPIDA
+========================================
+
+⚠️ IMPORTANTE: PRIMA DI INIZIARE
+================================
+Assicurati di avere ENTRAMBI nella stessa cartella:
+✅ RAG_Psicologia_Installer.exe
+✅ Cartella "Rag_db" (contiene il database dei documenti)
+
+🚀 INSTALLAZIONE:
+================
+1. Doppio-click su RAG_Psicologia_Installer.exe  
+2. Inserisci API Key OpenAI (inizia con "sk-")
+3. L'installer controllerà automaticamente la presenza di Rag_db
+4. Aspetta installazione automatica (5-10 min)
+5. Si aprirà il browser automaticamente
+
+🔍 ESEMPI DOMANDE:
+==================
+- "Qual è la differenza tra ansia e angoscia?"
+- "Come viene definito il transfert?"
+- "Caratteristiche del disturbo borderline?"
+
+🚀 AVVIO FUTURO:
+===============
+Dopo installazione, per usare il sistema:
+Doppio-click su "🚀 AVVIA_RAG_PSICOLOGIA.bat"
+
+📁 STRUTTURA DISTRIBUZIONE:
+===========================
+📦 Pacchetto_RAG_Psicologia/
+├── RAG_Psicologia_Installer.exe  ← Installer 
+├── Rag_db/                       ← Database (ESSENZIALE!)
+│   ├── [file database...]
+└── ISTRUZIONI_UTENTE.txt         ← Questo file
+
+💡 PROBLEMI COMUNI:
+==================
+❌ "Database RAG non trovato"
+   → Verifica che cartella Rag_db sia nella stessa directory dell'installer
+
+❌ "Errore API Key"  
+   → Verifica che inizi con "sk-" e sia quella fornita
+
+❌ Connessione internet necessaria solo per installazione

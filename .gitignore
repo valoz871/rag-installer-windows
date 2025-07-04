@@ -1,0 +1,16 @@
+# Build
+dist/
+build/
+*.spec
+
+# Python  
+__pycache__/
+*.pyc
+
+# Local
+.env
+.api_key
+.DS_Store
+Rag_db/
+Rag_db/
+.DS_Store
