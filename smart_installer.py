@@ -467,6 +467,13 @@ class SmartRAGInstaller:
     
     def copy_system_files(self):
         """Copia file del sistema RAG e database"""
+        # Verifica che source_db_path sia stato impostato
+        if self.source_db_path is None:
+            self.log_message("❌ ERRORE: Percorso database non impostato!", "ERROR")
+            raise Exception("Percorso database non valido. Contatta il supporto.")
+        
+        self.log_message(f"📂 Inizio copia da: {self.source_db_path}", "INFO")
+        
         # File da copiare (dal tuo sistema esistente)
         system_files = {
             "rag_system.py": self.get_rag_system_code(),
@@ -484,10 +491,21 @@ class SmartRAGInstaller:
         dest_db_path = self.install_dir / "Rag_db"
         
         try:
+            self.log_message(f"📁 Origine: {self.source_db_path}")
+            self.log_message(f"📁 Destinazione: {dest_db_path}")
+            
+            # Verifica che la sorgente esista ancora
+            if not self.source_db_path.exists():
+                raise Exception(f"Database sorgente non trovato: {self.source_db_path}")
+            
             shutil.copytree(self.source_db_path, dest_db_path)
-            self.log_message(f"✅ Database copiato: {len(list(dest_db_path.rglob('*')))} file", "SUCCESS")
+            copied_files = len(list(dest_db_path.rglob('*')))
+            self.log_message(f"✅ Database copiato: {copied_files} file", "SUCCESS")
+            
         except Exception as e:
             self.log_message(f"❌ Errore copia database: {e}", "ERROR")
+            self.log_message(f"📁 Sorgente: {self.source_db_path}", "ERROR")
+            self.log_message(f"📁 Destinazione: {dest_db_path}", "ERROR")
             raise Exception(f"Impossibile copiare database: {e}")
         
         # Salva API key
