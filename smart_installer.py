@@ -992,7 +992,7 @@ e invia screenshot degli errori.
 
 Buona consultazione! 🧠📚
 '''
-c
+
     def run(self):
         """Avvia installer"""
         self.root.mainloop()
