@@ -1,4 +1,4 @@
-    def update_certificates(self):
+def update_certificates(self):
         """Aggiorna certificati SSL di Windows automaticamente"""
         self.log_message("🔐 Aggiornamento certificati SSL...", "INFO")
         
@@ -550,7 +550,6 @@ Procedere con l'installazione?
         try:
             steps = [
                 ("Preparazione directory", self.prepare_directory),
-                ("Aggiornamento certificati SSL", self.update_certificates),
                 ("Download Python Embedded", self.download_python_embedded),
                 ("Estrazione Python", self.extract_python),
                 ("Configurazione Python", self.configure_python),
