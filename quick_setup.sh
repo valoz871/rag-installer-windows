@@ -92,17 +92,24 @@ cat > ISTRUZIONI_UTENTE.txt << 'EOF'
 
 ⚠️ IMPORTANTE: PRIMA DI INIZIARE
 ================================
-Assicurati di avere ENTRAMBI nella stessa cartella:
-✅ RAG_Psicologia_Installer.exe
-✅ Cartella "Rag_db" (contiene il database dei documenti)
+1. ✅ Scarica RAG_Psicologia_Installer.exe
+2. ✅ Scarica la cartella Rag_db (contiene il database dei documenti)
+3. ✅ Tieni entrambi accessibili (possono essere in cartelle diverse)
 
-🚀 INSTALLAZIONE:
-================
-1. Doppio-click su RAG_Psicologia_Installer.exe  
-2. Inserisci API Key OpenAI (inizia con "sk-")
-3. L'installer controllerà automaticamente la presenza di Rag_db
-4. Aspetta installazione automatica (5-10 min)
-5. Si aprirà il browser automaticamente
+🚀 INSTALLAZIONE GUIDATA:
+=========================
+1. 👆 Doppio-click su RAG_Psicologia_Installer.exe
+2. 📁 Scegli dove installare il sistema (o lascia default)
+3. 🗄️ Seleziona la cartella Rag_db (usa 🔍 Auto-rileva o 📂 Sfoglia)
+4. 🔑 Inserisci API Key OpenAI (inizia con "sk-")
+5. ⏳ Aspetta installazione automatica (5-10 min)
+6. ✅ Si aprirà il browser automaticamente
+
+🔍 FUNZIONI SMART INSTALLER:
+============================
+• 🔍 Auto-rileva: Trova automaticamente il database Rag_db
+• 📂 Sfoglia: Seleziona manualmente la cartella del database
+• 📁 Installa ovunque: Scegli dove mettere il sistema finale
 
 🔍 ESEMPI DOMANDE:
 ==================
@@ -113,20 +120,18 @@ Assicurati di avere ENTRAMBI nella stessa cartella:
 🚀 AVVIO FUTURO:
 ===============
 Dopo installazione, per usare il sistema:
-Doppio-click su "🚀 AVVIA_RAG_PSICOLOGIA.bat"
+👆 Doppio-click su "🚀 AVVIA_RAG_PSICOLOGIA.bat"
 
-📁 STRUTTURA DISTRIBUZIONE:
-===========================
-📦 Pacchetto_RAG_Psicologia/
-├── RAG_Psicologia_Installer.exe  ← Installer 
-├── Rag_db/                       ← Database (ESSENZIALE!)
-│   ├── [file database...]
-└── ISTRUZIONI_UTENTE.txt         ← Questo file
+📁 FLESSIBILITÀ PERCORSI:
+=========================
+✅ Installer e Rag_db possono essere in cartelle diverse
+✅ Sistema finale può essere installato ovunque
+✅ Auto-rilevamento intelligente del database
 
 💡 PROBLEMI COMUNI:
 ==================
-❌ "Database RAG non trovato"
-   → Verifica che cartella Rag_db sia nella stessa directory dell'installer
+❌ "Database non valido"
+   → Usa 🔍 Auto-rileva o verifica di aver selezionato la cartella Rag_db corretta
 
 ❌ "Errore API Key"  
    → Verifica che inizi con "sk-" e sia quella fornita

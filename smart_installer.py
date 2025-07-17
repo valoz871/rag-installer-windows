@@ -1,4 +1,4 @@
-def update_certificates(self):
+    def update_certificates(self):
         """Aggiorna certificati SSL di Windows automaticamente"""
         self.log_message("🔐 Aggiornamento certificati SSL...", "INFO")
         
@@ -192,7 +192,7 @@ class SmartRAGInstaller:
             dir_frame,
             textvariable=self.dir_var,
             font=("Arial", 10),
-            width=60
+            width=50
         )
         dir_entry.pack(side='left', fill='x', expand=True)
         
@@ -203,6 +203,48 @@ class SmartRAGInstaller:
             width=3
         )
         change_dir_btn.pack(side='right', padx=(5, 0))
+        
+        # Database RAG path
+        tk.Label(
+            config_frame,
+            text="🗄️ Percorso database Rag_db:",
+            font=("Arial", 10, "bold"),
+            bg='#f0f8ff'
+        ).pack(anchor='w', pady=(15, 0))
+        
+        db_frame = tk.Frame(config_frame, bg='#f0f8ff')
+        db_frame.pack(fill='x', pady=5)
+        
+        # Default: cerca Rag_db nella stessa directory dell'installer
+        default_db_path = Path.cwd() / "Rag_db"
+        self.db_var = tk.StringVar(value=str(default_db_path))
+        
+        db_entry = tk.Entry(
+            db_frame,
+            textvariable=self.db_var,
+            font=("Arial", 10),
+            width=50
+        )
+        db_entry.pack(side='left', fill='x', expand=True)
+        
+        change_db_btn = tk.Button(
+            db_frame,
+            text="📂",
+            command=self.choose_database,
+            width=3
+        )
+        change_db_btn.pack(side='right', padx=(5, 0))
+        
+        # Auto-detect button
+        detect_btn = tk.Button(
+            config_frame,
+            text="🔍 Auto-rileva Rag_db",
+            command=self.auto_detect_database,
+            bg='#6366f1',
+            fg='white',
+            font=("Arial", 9)
+        )
+        detect_btn.pack(pady=5)
         
         # API Key
         tk.Label(
@@ -320,6 +362,101 @@ class SmartRAGInstaller:
             self.dir_var.set(directory)
             self.install_dir = Path(directory) / "RAG_Psicologia_Sistema"
     
+    def choose_database(self):
+        """Scegli directory database Rag_db"""
+        from tkinter import filedialog
+        
+        directory = filedialog.askdirectory(
+            title="Scegli cartella Rag_db",
+            initialdir=self.db_var.get()
+        )
+        if directory:
+            # Verifica che sia effettivamente una cartella Rag_db valida
+            db_path = Path(directory)
+            if self.validate_database(db_path):
+                self.db_var.set(str(db_path))
+                self.log_message(f"✅ Database selezionato: {db_path}", "SUCCESS")
+            else:
+                messagebox.showerror(
+                    "Database Non Valido", 
+                    f"La cartella selezionata non sembra contenere un database RAG valido.\n"
+                    f"Assicurati di selezionare la cartella 'Rag_db' che contiene i file del database."
+                )
+    
+    def auto_detect_database(self):
+        """Auto-rileva database Rag_db in posizioni comuni"""
+        self.log_message("🔍 Ricerca automatica database...", "INFO")
+        
+        # Posizioni comuni da controllare
+        search_paths = [
+            Path.cwd() / "Rag_db",                          # Stessa cartella installer
+            Path.cwd().parent / "Rag_db",                   # Cartella parent
+            Path(self.dir_var.get()) / "Rag_db",           # Directory installazione scelta
+            Path.home() / "Desktop" / "Rag_db",            # Desktop
+            Path.home() / "Downloads" / "Rag_db",          # Downloads
+        ]
+        
+        # Cerca anche in sottocartelle
+        for base_path in [Path.cwd(), Path.cwd().parent, Path.home() / "Desktop"]:
+            try:
+                for item in base_path.iterdir():
+                    if item.is_dir() and item.name.lower() == "rag_db":
+                        search_paths.append(item)
+            except:
+                continue
+        
+        found_databases = []
+        
+        for db_path in search_paths:
+            if self.validate_database(db_path):
+                found_databases.append(db_path)
+                self.log_message(f"✅ Database trovato: {db_path}", "SUCCESS")
+        
+        if found_databases:
+            # Usa il primo trovato
+            best_db = found_databases[0]
+            self.db_var.set(str(best_db))
+            
+            if len(found_databases) > 1:
+                messagebox.showinfo(
+                    "Database Rilevati",
+                    f"Trovati {len(found_databases)} database RAG.\n"
+                    f"Selezionato: {best_db}\n\n"
+                    f"Puoi cambiare manualmente se necessario."
+                )
+            else:
+                messagebox.showinfo(
+                    "Database Trovato",
+                    f"✅ Database RAG rilevato automaticamente:\n{best_db}"
+                )
+        else:
+            messagebox.showwarning(
+                "Database Non Trovato",
+                "🔍 Nessun database RAG trovato automaticamente.\n\n"
+                "Usa il pulsante 📂 per selezionare manualmente la cartella Rag_db."
+            )
+            self.log_message("❌ Nessun database trovato automaticamente", "WARNING")
+    
+    def validate_database(self, db_path):
+        """Valida che la cartella sia un database RAG valido"""
+        if not db_path.exists() or not db_path.is_dir():
+            return False
+        
+        # Controlla presenza file database tipici
+        expected_files = ['chroma.sqlite3', 'chroma.sqlite3-wal', 'chroma.sqlite3-shm']
+        has_db_files = any((db_path / f).exists() for f in expected_files)
+        
+        # O controlla cartelle UUID tipiche di ChromaDB
+        has_uuid_dirs = any(
+            item.is_dir() and len(item.name) == 36 and item.name.count('-') == 4
+            for item in db_path.iterdir()
+        )
+        
+        # Verifica che non sia vuota
+        has_files = len(list(db_path.iterdir())) > 0
+        
+        return has_files and (has_db_files or has_uuid_dirs)
+    
     def log_message(self, message, level="INFO"):
         """Aggiungi messaggio al log"""
         levels = {
@@ -344,7 +481,7 @@ class SmartRAGInstaller:
     
     def start_installation(self):
         """Avvia installazione"""
-        # Validazione
+        # Validazione API Key
         self.api_key = self.api_entry.get().strip()
         if not self.api_key:
             messagebox.showerror("Errore", "Inserisci la API Key OpenAI!")
@@ -354,10 +491,20 @@ class SmartRAGInstaller:
             messagebox.showerror("Errore", "API Key deve iniziare con 'sk-'")
             return
         
-        # Aggiorna directory
+        # Validazione percorsi
         self.install_dir = Path(self.dir_var.get()) / "RAG_Psicologia_Sistema"
+        db_path = Path(self.db_var.get())
         
-        # Conferma
+        # Pre-validazione database
+        if not self.validate_database(db_path):
+            messagebox.showerror(
+                "Database Non Valido", 
+                f"Il database selezionato non è valido:\n{db_path}\n\n"
+                f"Usa il pulsante 🔍 Auto-rileva o 📂 per selezionare il database corretto."
+            )
+            return
+        
+        # Conferma installazione
         if self.install_dir.exists():
             if not messagebox.askyesno(
                 "Directory Esistente", 
@@ -365,6 +512,20 @@ class SmartRAGInstaller:
                 "Vuoi sovrascrivere il contenuto?"
             ):
                 return
+        
+        # Mostra riepilogo
+        summary = f"""
+📋 RIEPILOGO INSTALLAZIONE:
+
+📁 Directory installazione: {self.install_dir}
+🗄️ Database RAG: {db_path}
+🔑 API Key: {self.api_key[:10]}...{self.api_key[-4:]}
+
+Procedere con l'installazione?
+"""
+        
+        if not messagebox.askyesno("Conferma Installazione", summary):
+            return
         
         # Prepara UI per installazione
         self.install_btn.config(state='disabled')
