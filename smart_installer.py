@@ -98,9 +98,9 @@ class SmartRAGInstaller:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("🧠 RAG Psicologia - Smart Installer")
-        self.root.geometry("700x600")
+        self.root.geometry("700x700")  # Aumentata altezza per nuovi campi
         self.root.configure(bg='#f0f8ff')
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)  # Permetti ridimensionamento
         
         # Configurazione
         self.python_version = "3.11.8"  # Versione stabile
@@ -116,34 +116,59 @@ class SmartRAGInstaller:
         self.create_interface()
     
     def create_interface(self):
-        """Crea interfaccia installer"""
+        """Crea interfaccia installer con scrolling"""
         
         # Header elegante
-        header_frame = tk.Frame(self.root, bg='#1e3a8a', height=100)
+        header_frame = tk.Frame(self.root, bg='#1e3a8a', height=80)
         header_frame.pack(fill='x')
         header_frame.pack_propagate(False)
         
         title_label = tk.Label(
             header_frame,
             text="🧠 Sistema RAG Psicologia",
-            font=("Arial", 20, "bold"),
+            font=("Arial", 18, "bold"),
             fg="white",
             bg='#1e3a8a'
         )
-        title_label.pack(pady=15)
+        title_label.pack(pady=10)
         
         subtitle_label = tk.Label(
             header_frame,
             text="Smart Installer - Python Embedded",
-            font=("Arial", 12),
+            font=("Arial", 10),
             fg="#a5b4fc",
             bg='#1e3a8a'
         )
         subtitle_label.pack()
         
-        # Contenuto principale
-        main_frame = tk.Frame(self.root, bg='#f0f8ff', padx=30, pady=20)
-        main_frame.pack(fill='both', expand=True)
+        # Frame principale con scrolling
+        main_container = tk.Frame(self.root, bg='#f0f8ff')
+        main_container.pack(fill='both', expand=True, padx=20, pady=10)
+        
+        # Canvas per scrolling
+        canvas = tk.Canvas(main_container, bg='#f0f8ff', highlightthickness=0)
+        scrollbar = tk.Scrollbar(main_container, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg='#f0f8ff')
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Pack canvas e scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Bind mouse wheel
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        
+        # Ora usiamo scrollable_frame invece di main_frame
+        main_frame = scrollable_frame
         
         # Info installer
         info_text = tk.Label(
