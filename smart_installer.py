@@ -724,8 +724,9 @@ Procedere con l'installazione?
         self.log_message(f"Python estratto in: {python_dir}")
     
     def configure_python(self):
-        """Configura Python embedded per pip - versione con cleanup esplicito"""
+        """Configura Python embedded per pip - con percorsi espliciti (fix Windows aliases)"""
         python_dir = self.install_dir / "python"
+        python_exe = python_dir / "python.exe"
         
         # Abilita site-packages nel python._pth
         pth_file = python_dir / f"python{self.python_version.replace('.', '')[:2]}._pth"
@@ -789,21 +790,30 @@ try {{
         # Pausa per permettere cleanup rete
         time.sleep(2)
         
-        # Installa pip con processo isolato
-        python_exe = python_dir / "python.exe"
+        # Installa pip con percorso esplicito (FIX CRUCIALE per Windows aliases)
         self.log_message("🔧 Installando pip...")
         
         try:
-            # Usa subprocess con cleanup esplicito
+            # USA PERCORSO ESPLICITO - QUESTO È IL FIX PRINCIPALE
             process = subprocess.Popen([
-                str(python_exe), str(get_pip_path)
-            ], cwd=python_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                str(python_exe), str(get_pip_path)  # ← PERCORSI COMPLETI
+            ], cwd=str(python_dir), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
             # Aspetta con timeout
-            stdout, stderr = process.communicate(timeout=180)  # 3 minuti
+            stdout, stderr = process.communicate(timeout=120)  # 2 minuti
             
             if process.returncode == 0:
                 self.log_message("✅ Pip installato nel Python embedded", "SUCCESS")
+                
+                # Verifica pip con percorso esplicito
+                pip_test = subprocess.run([
+                    str(python_exe), "-m", "pip", "--version"  # ← PERCORSO ESPLICITO
+                ], capture_output=True, text=True, timeout=30, cwd=str(python_dir))
+                
+                if pip_test.returncode == 0:
+                    self.log_message(f"✅ Pip verificato: {pip_test.stdout.strip()}", "SUCCESS")
+                else:
+                    self.log_message("⚠️ Pip installato ma verifica fallita", "WARNING")
             else:
                 raise Exception(f"Installazione pip fallita: {stderr}")
                 
@@ -821,7 +831,7 @@ try {{
         time.sleep(1)
     
     def install_dependencies(self):
-        """Installa dipendenze Python con retry logic robusto"""
+        """Installa dipendenze Python con percorsi espliciti (fix Windows aliases)"""
         python_dir = self.install_dir / "python"
         python_exe = python_dir / "python.exe"
         
@@ -834,15 +844,15 @@ try {{
             "nltk>=3.8.1"
         ]
         
-        # Verifica pip prima di iniziare
+        # Verifica pip prima di iniziare (con percorso esplicito)
         self.log_message("🔍 Verificando pip prima installazione dipendenze...")
         try:
             pip_check = subprocess.run([
-                str(python_exe), "-m", "pip", "--version"
-            ], capture_output=True, text=True, timeout=30)
+                str(python_exe), "-m", "pip", "--version"  # ← PERCORSO ESPLICITO
+            ], capture_output=True, text=True, timeout=30, cwd=python_dir)
             
             if pip_check.returncode != 0:
-                raise Exception("Pip non funziona correttamente")
+                raise Exception(f"Pip non funziona: {pip_check.stderr}")
             else:
                 self.log_message(f"✅ Pip OK: {pip_check.stdout.strip()}")
         except Exception as e:
@@ -858,24 +868,27 @@ try {{
             package_name = dep.split('>=')[0]
             self.log_message(f"📦 Installando: {package_name}")
             
-            # Prova installazione con retry
+            # Installa con percorso esplicito (fix Windows aliases)
             success = False
-            for attempt in range(3):
+            for attempt in range(2):  # Ridotto a 2 tentativi
                 try:
                     if attempt > 0:
-                        self.log_message(f"🔄 Tentativo {attempt + 1}/3 per {package_name}...", "INFO")
+                        self.log_message(f"🔄 Tentativo {attempt + 1}/2 per {package_name}...", "INFO")
                     
-                    # Comando pip con opzioni robuste
+                    # COMANDO CON PERCORSO ESPLICITO - QUESTO È IL FIX CRUCIALE
                     cmd = [
-                        str(python_exe), "-m", "pip", "install", dep,
+                        str(python_exe), "-m", "pip", "install", dep,  # ← PERCORSO COMPLETO
                         "--no-warn-script-location",
-                        "--timeout", "120",
-                        "--retries", "3",
-                        "--no-cache-dir"  # Evita problemi cache
+                        "--timeout", "60",
+                        "--no-cache-dir"
                     ]
                     
                     result = subprocess.run(
-                        cmd, cwd=python_dir, capture_output=True, text=True, timeout=180
+                        cmd, 
+                        cwd=str(python_dir),  # ← DIRECTORY ESPLICITA
+                        capture_output=True, 
+                        text=True, 
+                        timeout=120  # 2 minuti per pacchetto
                     )
                     
                     if result.returncode == 0:
@@ -888,23 +901,6 @@ try {{
                         error_msg = result.stderr.strip() if result.stderr else result.stdout.strip()
                         self.log_message(f"❌ Tentativo {attempt + 1} per {package_name}: {error_msg}", "WARNING")
                         
-                        # Prova versione semplificata se fallisce
-                        if attempt == 1:  # Secondo tentativo con versione base
-                            try:
-                                simple_cmd = [
-                                    str(python_exe), "-m", "pip", "install", package_name,
-                                    "--no-warn-script-location", "--timeout", "120"
-                                ]
-                                simple_result = subprocess.run(
-                                    simple_cmd, cwd=python_dir, capture_output=True, text=True, timeout=180
-                                )
-                                if simple_result.returncode == 0:
-                                    self.log_message(f"✅ {package_name} installato (versione base)", "SUCCESS")
-                                    success = True
-                                    break
-                            except Exception as simple_e:
-                                self.log_message(f"❌ Anche versione base fallita: {simple_e}", "WARNING")
-                        
                 except subprocess.TimeoutExpired:
                     self.log_message(f"⏰ Timeout installazione {package_name} tentativo {attempt + 1}", "WARNING")
                 except Exception as e:
@@ -912,7 +908,7 @@ try {{
             
             if not success:
                 failed_packages.append(package_name)
-                self.log_message(f"❌ Installazione {package_name} fallita dopo 3 tentativi", "ERROR")
+                self.log_message(f"❌ Installazione {package_name} fallita dopo 2 tentativi", "ERROR")
         
         # Riepilogo installazione
         successful_packages = len(dependencies) - len(failed_packages)
