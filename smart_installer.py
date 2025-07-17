@@ -724,7 +724,7 @@ Procedere con l'installazione?
         self.log_message(f"Python estratto in: {python_dir}")
     
     def configure_python(self):
-        """Configura Python embedded per pip con certificati corretti"""
+        """Configura Python embedded per pip con gestione robuста timeout"""
         python_dir = self.install_dir / "python"
         
         # Abilita site-packages nel python._pth
@@ -740,63 +740,96 @@ Procedere con l'installazione?
             if "#import site" in content:
                 content = content.replace("#import site", "import site")
                 pth_file.write_text(content)
-                self.log_message("Abilitato site-packages in Python embedded")
+                self.log_message("✅ Abilitato site-packages in Python embedded")
         
-        # Scarica get-pip.py con gestione certificati
+        # Scarica get-pip.py con timeout esteso
         get_pip_url = "https://bootstrap.pypa.io/get-pip.py"
         get_pip_path = python_dir / "get-pip.py"
         
         self.log_message("📥 Scaricando get-pip.py...")
         
-        try:
-            # Metodo 1: urllib standard
-            urllib.request.urlretrieve(get_pip_url, get_pip_path)
-            self.log_message("✅ get-pip.py scaricato con urllib")
-            
-        except Exception as e:
-            self.log_message(f"❌ Errore urllib per get-pip: {e}", "WARNING")
-            
-            # Metodo 2: PowerShell
+        # Retry logic per download get-pip
+        for attempt in range(3):
             try:
-                ps_cmd = f'''
+                if attempt > 0:
+                    self.log_message(f"🔄 Tentativo {attempt + 1}/3 download get-pip.py...", "INFO")
+                
+                # Metodo 1: urllib standard con timeout
+                import socket
+                socket.setdefaulttimeout(120)  # 2 minuti timeout
+                urllib.request.urlretrieve(get_pip_url, get_pip_path)
+                self.log_message("✅ get-pip.py scaricato con urllib")
+                break
+                
+            except Exception as e:
+                self.log_message(f"❌ Tentativo {attempt + 1} urllib fallito: {e}", "WARNING")
+                
+                if attempt < 2:  # Non all'ultimo tentativo
+                    # Metodo 2: PowerShell con timeout esteso
+                    try:
+                        ps_cmd = f'''
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Invoke-WebRequest -Uri "{get_pip_url}" -OutFile "{get_pip_path}" -UseBasicParsing
-Write-Host "✅ get-pip.py scaricato"
+$webClient = New-Object System.Net.WebClient
+$webClient.Timeout = 120000  # 2 minuti
+Invoke-WebRequest -Uri "{get_pip_url}" -OutFile "{get_pip_path}" -UseBasicParsing -TimeoutSec 120
+Write-Host "✅ get-pip.py scaricato con PowerShell"
 '''
-                result = subprocess.run([
-                    "powershell", "-Command", ps_cmd
-                ], capture_output=True, text=True, timeout=60)
-                
-                if result.returncode == 0:
-                    self.log_message("✅ get-pip.py scaricato con PowerShell")
-                else:
-                    raise Exception("PowerShell download fallito")
-                    
-            except Exception as e2:
-                self.log_message(f"❌ Errore PowerShell per get-pip: {e2}", "ERROR")
-                raise Exception("Impossibile scaricare get-pip.py")
+                        result = subprocess.run([
+                            "powershell", "-Command", ps_cmd
+                        ], capture_output=True, text=True, timeout=150)
+                        
+                        if result.returncode == 0 and get_pip_path.exists():
+                            self.log_message("✅ get-pip.py scaricato con PowerShell")
+                            break
+                        else:
+                            raise Exception("PowerShell download fallito")
+                            
+                    except Exception as e2:
+                        self.log_message(f"❌ Tentativo {attempt + 1} PowerShell fallito: {e2}", "WARNING")
+                        if attempt == 2:  # Ultimo tentativo
+                            raise Exception("Impossibile scaricare get-pip.py dopo 3 tentativi")
         
-        # Installa pip
+        # Installa pip con timeout esteso e retry
         python_exe = python_dir / "python.exe"
         self.log_message("🔧 Installando pip...")
         
-        try:
-            subprocess.run([str(python_exe), str(get_pip_path)], 
-                          cwd=python_dir, check=True,
-                          capture_output=True, timeout=120)
-            
-            self.log_message("✅ Pip installato nel Python embedded", "SUCCESS")
-            
-        except subprocess.TimeoutExpired:
-            self.log_message("⏰ Timeout installazione pip", "WARNING")
-            # Continua comunque
-        except Exception as e:
-            self.log_message(f"❌ Errore installazione pip: {e}", "ERROR")
-            raise Exception(f"Installazione pip fallita: {e}")
+        for attempt in range(3):
+            try:
+                if attempt > 0:
+                    self.log_message(f"🔄 Tentativo {attempt + 1}/3 installazione pip...", "INFO")
+                
+                result = subprocess.run([
+                    str(python_exe), str(get_pip_path), "--timeout", "120"
+                ], cwd=python_dir, capture_output=True, text=True, timeout=180)  # 3 minuti
+                
+                if result.returncode == 0:
+                    self.log_message("✅ Pip installato nel Python embedded", "SUCCESS")
+                    
+                    # Verifica che pip funzioni
+                    pip_test = subprocess.run([
+                        str(python_exe), "-m", "pip", "--version"
+                    ], capture_output=True, text=True, timeout=30)
+                    
+                    if pip_test.returncode == 0:
+                        self.log_message(f"✅ Pip verificato: {pip_test.stdout.strip()}", "SUCCESS")
+                        return
+                    else:
+                        raise Exception("Pip installato ma non funziona")
+                else:
+                    raise Exception(f"Installazione pip fallita: {result.stderr}")
+                    
+            except subprocess.TimeoutExpired:
+                self.log_message(f"⏰ Timeout installazione pip tentativo {attempt + 1}", "WARNING")
+                if attempt == 2:
+                    raise Exception("Timeout installazione pip dopo 3 tentativi")
+            except Exception as e:
+                self.log_message(f"❌ Tentativo {attempt + 1} pip fallito: {e}", "WARNING")
+                if attempt == 2:
+                    raise Exception(f"Installazione pip fallita dopo 3 tentativi: {e}")
     
     def install_dependencies(self):
-        """Installa dipendenze Python"""
+        """Installa dipendenze Python con retry logic robusto"""
         python_dir = self.install_dir / "python"
         python_exe = python_dir / "python.exe"
         
@@ -809,29 +842,104 @@ Write-Host "✅ get-pip.py scaricato"
             "nltk>=3.8.1"
         ]
         
+        # Verifica pip prima di iniziare
+        self.log_message("🔍 Verificando pip prima installazione dipendenze...")
+        try:
+            pip_check = subprocess.run([
+                str(python_exe), "-m", "pip", "--version"
+            ], capture_output=True, text=True, timeout=30)
+            
+            if pip_check.returncode != 0:
+                raise Exception("Pip non funziona correttamente")
+            else:
+                self.log_message(f"✅ Pip OK: {pip_check.stdout.strip()}")
+        except Exception as e:
+            self.log_message(f"❌ Pip non funzionante: {e}", "ERROR")
+            raise Exception("Pip non disponibile per installazione dipendenze")
+        
+        failed_packages = []
+        
         for i, dep in enumerate(dependencies):
             if self.cancel_install:
                 return
             
-            self.log_message(f"Installando: {dep}")
+            package_name = dep.split('>=')[0]
+            self.log_message(f"📦 Installando: {package_name}")
             
-            try:
-                subprocess.run([
-                    str(python_exe), "-m", "pip", "install", dep, "--no-warn-script-location"
-                ], cwd=python_dir, check=True, capture_output=True)
-                
-                progress = 60 + ((i + 1) / len(dependencies)) * 20
-                self.update_progress(progress, f"📦 Installato: {dep.split('>=')[0]}")
-                
-            except subprocess.CalledProcessError as e:
-                self.log_message(f"Errore installazione {dep}: {e}", "WARNING")
-                # Prova versione semplificata
-                simple_name = dep.split('>=')[0]
-                subprocess.run([
-                    str(python_exe), "-m", "pip", "install", simple_name, "--no-warn-script-location"
-                ], cwd=python_dir, check=True, capture_output=True)
+            # Prova installazione con retry
+            success = False
+            for attempt in range(3):
+                try:
+                    if attempt > 0:
+                        self.log_message(f"🔄 Tentativo {attempt + 1}/3 per {package_name}...", "INFO")
+                    
+                    # Comando pip con opzioni robuste
+                    cmd = [
+                        str(python_exe), "-m", "pip", "install", dep,
+                        "--no-warn-script-location",
+                        "--timeout", "120",
+                        "--retries", "3",
+                        "--no-cache-dir"  # Evita problemi cache
+                    ]
+                    
+                    result = subprocess.run(
+                        cmd, cwd=python_dir, capture_output=True, text=True, timeout=180
+                    )
+                    
+                    if result.returncode == 0:
+                        progress = 50 + ((i + 1) / len(dependencies)) * 25
+                        self.update_progress(progress, f"✅ Installato: {package_name}")
+                        self.log_message(f"✅ {package_name} installato", "SUCCESS")
+                        success = True
+                        break
+                    else:
+                        error_msg = result.stderr.strip() if result.stderr else result.stdout.strip()
+                        self.log_message(f"❌ Tentativo {attempt + 1} per {package_name}: {error_msg}", "WARNING")
+                        
+                        # Prova versione semplificata se fallisce
+                        if attempt == 1:  # Secondo tentativo con versione base
+                            try:
+                                simple_cmd = [
+                                    str(python_exe), "-m", "pip", "install", package_name,
+                                    "--no-warn-script-location", "--timeout", "120"
+                                ]
+                                simple_result = subprocess.run(
+                                    simple_cmd, cwd=python_dir, capture_output=True, text=True, timeout=180
+                                )
+                                if simple_result.returncode == 0:
+                                    self.log_message(f"✅ {package_name} installato (versione base)", "SUCCESS")
+                                    success = True
+                                    break
+                            except Exception as simple_e:
+                                self.log_message(f"❌ Anche versione base fallita: {simple_e}", "WARNING")
+                        
+                except subprocess.TimeoutExpired:
+                    self.log_message(f"⏰ Timeout installazione {package_name} tentativo {attempt + 1}", "WARNING")
+                except Exception as e:
+                    self.log_message(f"❌ Errore installazione {package_name} tentativo {attempt + 1}: {e}", "WARNING")
+            
+            if not success:
+                failed_packages.append(package_name)
+                self.log_message(f"❌ Installazione {package_name} fallita dopo 3 tentativi", "ERROR")
         
-        self.log_message("Tutte le dipendenze installate", "SUCCESS")
+        # Riepilogo installazione
+        successful_packages = len(dependencies) - len(failed_packages)
+        self.log_message(f"📊 Installazione completata: {successful_packages}/{len(dependencies)} pacchetti", "INFO")
+        
+        if failed_packages:
+            self.log_message(f"⚠️ Pacchetti falliti: {', '.join(failed_packages)}", "WARNING")
+            
+            # Se falliscono pacchetti critici, interrompi
+            critical_packages = ['openai', 'streamlit', 'chromadb']
+            failed_critical = [pkg for pkg in failed_packages if pkg in critical_packages]
+            
+            if failed_critical:
+                self.log_message(f"❌ Pacchetti critici falliti: {', '.join(failed_critical)}", "ERROR")
+                raise Exception(f"Installazione fallita per pacchetti critici: {', '.join(failed_critical)}")
+            else:
+                self.log_message("⚠️ Alcuni pacchetti opzionali falliti, ma sistema dovrebbe funzionare", "WARNING")
+        else:
+            self.log_message("✅ Tutte le dipendenze installate con successo", "SUCCESS")
     
     def copy_system_files(self):
         """Copia file del sistema RAG e database"""
