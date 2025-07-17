@@ -1645,4 +1645,3 @@ Buona consultazione! 🧠📚
 if __name__ == "__main__":
     app = SmartRAGInstaller()
     app.run()
-c
