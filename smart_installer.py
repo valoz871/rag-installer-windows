@@ -724,7 +724,7 @@ Procedere con l'installazione?
         self.log_message(f"Python estratto in: {python_dir}")
     
     def configure_python(self):
-        """Configura Python embedded per pip con gestione robuста timeout"""
+        """Configura Python embedded per pip - versione con cleanup esplicito"""
         python_dir = self.install_dir / "python"
         
         # Abilita site-packages nel python._pth
@@ -742,91 +742,83 @@ Procedere con l'installazione?
                 pth_file.write_text(content)
                 self.log_message("✅ Abilitato site-packages in Python embedded")
         
-        # Scarica get-pip.py con timeout esteso
+        # Pausa dopo estrazione Python per stabilizzare
+        import time
+        time.sleep(2)
+        
+        # Scarica get-pip.py con cleanup esplicito
         get_pip_url = "https://bootstrap.pypa.io/get-pip.py"
         get_pip_path = python_dir / "get-pip.py"
         
         self.log_message("📥 Scaricando get-pip.py...")
         
-        # Retry logic per download get-pip
-        for attempt in range(3):
-            try:
-                if attempt > 0:
-                    self.log_message(f"🔄 Tentativo {attempt + 1}/3 download get-pip.py...", "INFO")
-                
-                # Metodo 1: urllib standard con timeout
-                import socket
-                socket.setdefaulttimeout(120)  # 2 minuti timeout
-                urllib.request.urlretrieve(get_pip_url, get_pip_path)
-                self.log_message("✅ get-pip.py scaricato con urllib")
-                break
-                
-            except Exception as e:
-                self.log_message(f"❌ Tentativo {attempt + 1} urllib fallito: {e}", "WARNING")
-                
-                if attempt < 2:  # Non all'ultimo tentativo
-                    # Metodo 2: PowerShell con timeout esteso
-                    try:
-                        ps_cmd = f'''
+        try:
+            # Usa PowerShell con cleanup esplicito delle connessioni
+            ps_cmd = f'''
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$webClient = New-Object System.Net.WebClient
-$webClient.Timeout = 120000  # 2 minuti
-Invoke-WebRequest -Uri "{get_pip_url}" -OutFile "{get_pip_path}" -UseBasicParsing -TimeoutSec 120
-Write-Host "✅ get-pip.py scaricato con PowerShell"
+
+try {{
+    $webClient = New-Object System.Net.WebClient
+    $webClient.DownloadFile("{get_pip_url}", "{get_pip_path}")
+    $webClient.Dispose()  # Cleanup esplicito
+    Write-Host "Downloaded get-pip.py successfully"
+}} catch {{
+    Write-Host "Error: $_"
+    exit 1
+}} finally {{
+    # Forza garbage collection
+    [System.GC]::Collect()
+    [System.GC]::WaitForPendingFinalizers()
+}}
 '''
-                        result = subprocess.run([
-                            "powershell", "-Command", ps_cmd
-                        ], capture_output=True, text=True, timeout=150)
-                        
-                        if result.returncode == 0 and get_pip_path.exists():
-                            self.log_message("✅ get-pip.py scaricato con PowerShell")
-                            break
-                        else:
-                            raise Exception("PowerShell download fallito")
-                            
-                    except Exception as e2:
-                        self.log_message(f"❌ Tentativo {attempt + 1} PowerShell fallito: {e2}", "WARNING")
-                        if attempt == 2:  # Ultimo tentativo
-                            raise Exception("Impossibile scaricare get-pip.py dopo 3 tentativi")
+            
+            result = subprocess.run([
+                "powershell", "-Command", ps_cmd
+            ], capture_output=True, text=True, timeout=60)
+            
+            if result.returncode == 0 and get_pip_path.exists():
+                self.log_message("✅ get-pip.py scaricato")
+            else:
+                raise Exception(f"Download fallito: {result.stderr}")
+                
+        except Exception as e:
+            self.log_message(f"❌ Errore download get-pip: {e}", "ERROR")
+            raise Exception("Impossibile scaricare get-pip.py")
         
-        # Installa pip con timeout esteso e retry
+        # Pausa per permettere cleanup rete
+        time.sleep(2)
+        
+        # Installa pip con processo isolato
         python_exe = python_dir / "python.exe"
         self.log_message("🔧 Installando pip...")
         
-        for attempt in range(3):
-            try:
-                if attempt > 0:
-                    self.log_message(f"🔄 Tentativo {attempt + 1}/3 installazione pip...", "INFO")
+        try:
+            # Usa subprocess con cleanup esplicito
+            process = subprocess.Popen([
+                str(python_exe), str(get_pip_path)
+            ], cwd=python_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            
+            # Aspetta con timeout
+            stdout, stderr = process.communicate(timeout=180)  # 3 minuti
+            
+            if process.returncode == 0:
+                self.log_message("✅ Pip installato nel Python embedded", "SUCCESS")
+            else:
+                raise Exception(f"Installazione pip fallita: {stderr}")
                 
-                result = subprocess.run([
-                    str(python_exe), str(get_pip_path), "--timeout", "120"
-                ], cwd=python_dir, capture_output=True, text=True, timeout=180)  # 3 minuti
-                
-                if result.returncode == 0:
-                    self.log_message("✅ Pip installato nel Python embedded", "SUCCESS")
-                    
-                    # Verifica che pip funzioni
-                    pip_test = subprocess.run([
-                        str(python_exe), "-m", "pip", "--version"
-                    ], capture_output=True, text=True, timeout=30)
-                    
-                    if pip_test.returncode == 0:
-                        self.log_message(f"✅ Pip verificato: {pip_test.stdout.strip()}", "SUCCESS")
-                        return
-                    else:
-                        raise Exception("Pip installato ma non funziona")
-                else:
-                    raise Exception(f"Installazione pip fallita: {result.stderr}")
-                    
-            except subprocess.TimeoutExpired:
-                self.log_message(f"⏰ Timeout installazione pip tentativo {attempt + 1}", "WARNING")
-                if attempt == 2:
-                    raise Exception("Timeout installazione pip dopo 3 tentativi")
-            except Exception as e:
-                self.log_message(f"❌ Tentativo {attempt + 1} pip fallito: {e}", "WARNING")
-                if attempt == 2:
-                    raise Exception(f"Installazione pip fallita dopo 3 tentativi: {e}")
+        except subprocess.TimeoutExpired:
+            # Kill processo se in timeout
+            process.kill()
+            stdout, stderr = process.communicate()
+            self.log_message("⏰ Timeout installazione pip - processo terminato", "WARNING")
+            raise Exception("Timeout installazione pip")
+        except Exception as e:
+            self.log_message(f"❌ Errore installazione pip: {e}", "ERROR")
+            raise Exception(f"Installazione pip fallita: {e}")
+        
+        # Cleanup finale
+        time.sleep(1)
     
     def install_dependencies(self):
         """Installa dipendenze Python con retry logic robusto"""
