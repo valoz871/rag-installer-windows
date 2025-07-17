@@ -348,12 +348,29 @@ class SmartRAGInstaller:
             self.installation_failed(str(e))
     
     def prepare_directory(self):
-        """Prepara directory installazione"""
+        """Prepara directory installazione con gestione conflitti"""
         if self.install_dir.exists():
-            shutil.rmtree(self.install_dir)
+            self.log_message(f"⚠️ Directory già esistente: {self.install_dir}", "WARNING")
+            self.log_message("🗑️ Rimozione installazione precedente...", "INFO")
+            
+            try:
+                # Rimuovi directory esistente completamente
+                shutil.rmtree(self.install_dir)
+                self.log_message("✅ Installazione precedente rimossa", "SUCCESS")
+            except Exception as e:
+                self.log_message(f"❌ Errore rimozione: {e}", "ERROR")
+                # Prova con nome alternativo
+                counter = 1
+                while True:
+                    alt_dir = self.install_dir.parent / f"{self.install_dir.name}_{counter}"
+                    if not alt_dir.exists():
+                        self.install_dir = alt_dir
+                        break
+                    counter += 1
+                self.log_message(f"📁 Usando directory alternativa: {self.install_dir}", "INFO")
         
         self.install_dir.mkdir(parents=True, exist_ok=True)
-        self.log_message(f"Directory creata: {self.install_dir}")
+        self.log_message(f"📁 Directory preparata: {self.install_dir}", "SUCCESS")
     
     def download_python_embedded(self):
         """Scarica Python Embedded"""
@@ -498,6 +515,12 @@ class SmartRAGInstaller:
             if not self.source_db_path.exists():
                 raise Exception(f"Database sorgente non trovato: {self.source_db_path}")
             
+            # Se la destinazione esiste già, rimuovila
+            if dest_db_path.exists():
+                self.log_message("⚠️ Directory database destinazione già esistente, rimozione...", "WARNING")
+                shutil.rmtree(dest_db_path)
+                self.log_message("✅ Directory precedente rimossa", "SUCCESS")
+            
             shutil.copytree(self.source_db_path, dest_db_path)
             copied_files = len(list(dest_db_path.rglob('*')))
             self.log_message(f"✅ Database copiato: {copied_files} file", "SUCCESS")
@@ -550,37 +573,80 @@ if errorlevel 1 (
         self.log_message("Launcher creato: 🚀 AVVIA_RAG_PSICOLOGIA.bat", "SUCCESS")
     
     def test_installation(self):
-        """Test finale dell'installazione"""
+        """Test finale dell'installazione con verifica database"""
         python_exe = self.install_dir / "python" / "python.exe"
         
         # Test import principali
         test_script = '''
 import sys
+import os
+from pathlib import Path
+
 try:
+    # Test import
     import openai
     import chromadb
     import streamlit
     print("✅ Tutti i moduli importati correttamente")
+    
+    # Test database
+    db_path = Path("Rag_db")
+    if db_path.exists():
+        print(f"✅ Database trovato: {len(list(db_path.iterdir()))} file")
+        
+        # Test ChromaDB
+        import chromadb
+        client = chromadb.PersistentClient(path="./Rag_db")
+        collections = client.list_collections()
+        print(f"✅ Database ChromaDB: {len(collections)} collezioni")
+        
+        # Test API key
+        api_file = Path(".api_key")
+        if api_file.exists():
+            print("✅ API key configurata")
+        else:
+            print("⚠️ API key mancante")
+            
+    else:
+        print("❌ Database non trovato")
+        sys.exit(1)
+        
 except ImportError as e:
     print(f"❌ Errore import: {e}")
     sys.exit(1)
+except Exception as e:
+    print(f"❌ Errore test: {e}")
+    sys.exit(1)
 '''
         
-        test_file = self.install_dir / "test_imports.py"
+        test_file = self.install_dir / "test_complete.py"
         test_file.write_text(test_script)
         
-        result = subprocess.run([
-            str(python_exe), str(test_file)
-        ], capture_output=True, text=True)
-        
-        if result.returncode == 0:
-            self.log_message("Test importazioni: OK", "SUCCESS")
-        else:
-            self.log_message(f"Test fallito: {result.stderr}", "ERROR")
-            raise Exception("Test finale fallito")
+        try:
+            result = subprocess.run([
+                str(python_exe), str(test_file)
+            ], capture_output=True, text=True, cwd=self.install_dir)
+            
+            if result.returncode == 0:
+                self.log_message("✅ Test completo: SUCCESSO", "SUCCESS")
+                self.log_message(result.stdout.strip(), "INFO")
+            else:
+                self.log_message(f"❌ Test fallito: {result.stderr}", "ERROR")
+                self.log_message(f"Output: {result.stdout}", "INFO")
+                raise Exception("Test finale fallito")
+                
+        except Exception as e:
+            self.log_message(f"❌ Errore test: {e}", "ERROR")
+            raise Exception("Test finale non eseguibile")
         
         # Rimuovi file test
         test_file.unlink()
+        
+        # Test finale dimensioni
+        total_size = sum(f.stat().st_size for f in self.install_dir.rglob('*') if f.is_file())
+        size_mb = total_size / 1024 / 1024
+        
+        self.log_message(f"📊 Sistema finale: {size_mb:.1f} MB", "SUCCESS")
     
     def finalize_installation(self):
         """Finalizza installazione"""
@@ -854,10 +920,10 @@ with st.expander("💡 Esempi di Domande"):
 '''
     
     def get_launcher_code(self):
-        """Restituisce codice launcher.py"""
+        """Restituisce codice launcher.py ottimizzato"""
         return '''#!/usr/bin/env python3
 """
-Launcher per Sistema RAG - Avvia interfaccia web
+Launcher robusto per Sistema RAG - Avvia interfaccia web
 """
 
 import os
@@ -867,55 +933,183 @@ import webbrowser
 import time
 from pathlib import Path
 
-def main():
-    """Avvia sistema RAG"""
+def check_requirements():
+    """Verifica tutti i requisiti del sistema"""
     
-    # Imposta API key se disponibile
+    print("🔍 Verifica sistema RAG...")
+    
+    # Verifica API key
     api_key_file = Path('.api_key')
-    if api_key_file.exists():
-        api_key = api_key_file.read_text().strip()
-        os.environ['OPENAI_API_KEY'] = api_key
+    if not api_key_file.exists():
+        print("❌ File API key non trovato!")
+        print("📁 Assicurati che il file '.api_key' sia presente")
+        return False
+    
+    api_key = api_key_file.read_text().strip()
+    if not api_key.startswith('sk-'):
+        print("❌ API key non valida!")
+        print("🔑 L'API key deve iniziare con 'sk-'")
+        return False
+    
+    os.environ['OPENAI_API_KEY'] = api_key
+    print("✅ API key configurata")
     
     # Verifica database
-    if not Path('Rag_db').exists():
+    db_path = Path('Rag_db')
+    if not db_path.exists():
         print("❌ Database RAG non trovato!")
-        print("📁 Assicurati che la cartella 'Rag_db' sia presente nella stessa directory")
-        input("Premi Invio per uscire...")
-        return 1
+        print("📁 Assicurati che la cartella 'Rag_db' sia presente")
+        print(f"📍 Directory corrente: {Path.cwd()}")
+        return False
     
-    print("✅ Database RAG trovato")
-    print("🌐 Avviando interfaccia web...")
+    db_files = list(db_path.iterdir())
+    if not db_files:
+        print("❌ Database vuoto!")
+        return False
+    
+    print(f"✅ Database trovato: {len(db_files)} file")
+    
+    # Verifica file sistema
+    required_files = ['rag_system.py', 'web_app.py']
+    for file in required_files:
+        if not Path(file).exists():
+            print(f"❌ File mancante: {file}")
+            return False
+    
+    print("✅ File sistema verificati")
+    
+    return True
+
+def find_python():
+    """Trova eseguibile Python corretto"""
+    
+    # Prova percorsi Python embedded
+    possible_paths = [
+        Path("python/python.exe"),
+        Path("python3"),
+        Path("python"),
+        Path(sys.executable)
+    ]
+    
+    for python_path in possible_paths:
+        try:
+            if python_path.exists() and python_path.is_file():
+                # Test veloce
+                result = subprocess.run([str(python_path), "--version"], 
+                                      capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    print(f"✅ Python trovato: {python_path}")
+                    return str(python_path)
+        except Exception:
+            continue
+    
+    print("❌ Python non trovato!")
+    return None
+
+def start_streamlit(python_exe):
+    """Avvia server Streamlit"""
     
     try:
-        # Avvia Streamlit
-        subprocess.Popen([
-            sys.executable, "-m", "streamlit", "run", 
+        print("🌐 Avviando server web...")
+        
+        # Controlla se porta già occupata
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(('localhost', 8501))
+        sock.close()
+        
+        if result == 0:
+            print("⚠️ Porta 8501 già in uso")
+            print("🌐 Provo ad aprire browser su sessione esistente...")
+            webbrowser.open('http://localhost:8501')
+            return True
+        
+        # Avvia nuovo server
+        cmd = [
+            python_exe, "-m", "streamlit", "run", 
             "web_app.py",
             "--server.address", "localhost",
             "--server.port", "8501",
             "--browser.gatherUsageStats", "false",
             "--server.headless", "true"
-        ])
+        ]
         
-        # Attendi e apri browser
-        time.sleep(3)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, 
+                                 stderr=subprocess.PIPE, text=True)
+        
+        # Aspetta avvio server
+        print("⏳ Attendo avvio server...")
+        for i in range(15):  # Max 15 secondi
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                result = sock.connect_ex(('localhost', 8501))
+                sock.close()
+                
+                if result == 0:
+                    print("✅ Server avviato!")
+                    break
+            except:
+                pass
+            
+            time.sleep(1)
+            
+            # Controlla se processo è morto
+            if process.poll() is not None:
+                stdout, stderr = process.communicate()
+                print(f"❌ Errore avvio server:")
+                print(f"Output: {stdout}")
+                print(f"Errore: {stderr}")
+                return False
+        else:
+            print("⏰ Timeout avvio server")
+            return False
+        
+        # Apri browser
+        print("🌐 Apertura browser...")
         webbrowser.open('http://localhost:8501')
         
         print("✅ Sistema avviato!")
-        print("🌐 Interfaccia disponibile su: http://localhost:8501")
-        print("❌ Per fermare il sistema, chiudi questa finestra")
+        print("🌐 Interfaccia: http://localhost:8501")
+        print("❌ Per fermare: chiudi questa finestra")
         
-        # Mantieni aperto
+        # Mantieni processo vivo
         try:
-            while True:
-                time.sleep(1)
+            process.wait()
         except KeyboardInterrupt:
-            print("\\n👋 Sistema fermato")
-            return 0
-            
+            print("\\n⏹️ Fermando sistema...")
+            process.terminate()
+            return True
+        
+        return True
+        
     except Exception as e:
         print(f"❌ Errore avvio: {e}")
-        input("Premi Invio per uscire...")
+        return False
+
+def main():
+    """Funzione principale launcher"""
+    
+    print("🧠 SISTEMA RAG PSICOLOGIA")
+    print("=" * 30)
+    
+    # Verifica requisiti
+    if not check_requirements():
+        input("\\nPremi Invio per uscire...")
+        return 1
+    
+    # Trova Python
+    python_exe = find_python()
+    if not python_exe:
+        input("\\nPremi Invio per uscire...")
+        return 1
+    
+    # Avvia sistema
+    if start_streamlit(python_exe):
+        print("\\n👋 Sistema terminato correttamente")
+        return 0
+    else:
+        print("\\n❌ Sistema terminato con errori")
+        input("\\nPremi Invio per uscire...")
         return 1
 
 if __name__ == "__main__":
