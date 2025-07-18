@@ -21,9 +21,9 @@ class SimpleRAGInstaller:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("🧠 RAG Psicologia - Setup Automatico")
-        self.root.geometry("600x550")
+        self.root.geometry("800x700")  # Più grande
         self.root.configure(bg='#f0f8ff')
-        self.root.resizable(True, True)
+        self.root.resizable(True, True)  # Completamente ridimensionabile
         
         # Configurazione
         self.python_version = "3.11.8"
@@ -152,7 +152,7 @@ class SimpleRAGInstaller:
         log_frame = tk.Frame(main_frame)
         log_frame.pack(fill='both', expand=True, pady=5)
         
-        self.log_text = tk.Text(log_frame, height=8, width=70, font=("Courier", 9))
+        self.log_text = tk.Text(log_frame, height=12, width=90, font=("Courier", 8))  # Font più piccolo
         scrollbar = tk.Scrollbar(log_frame, command=self.log_text.yview)
         self.log_text.config(yscrollcommand=scrollbar.set)
         
@@ -222,10 +222,16 @@ class SimpleRAGInstaller:
         return has_db_files or has_uuid_dirs
     
     def log(self, message):
-        """Log semplice"""
-        self.log_text.insert(tk.END, f"{message}\n")
+        """Log semplice con timestamp"""
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        formatted_message = f"[{timestamp}] {message}"
+        self.log_text.insert(tk.END, f"{formatted_message}\n")
         self.log_text.see(tk.END)
         self.root.update()
+        
+        # Debug: stampa anche su console se disponibile
+        print(formatted_message)
     
     def start_setup(self):
         """Avvia setup con validazioni migliorate"""
@@ -289,7 +295,7 @@ class SimpleRAGInstaller:
             self.install_packages_simple(python_dir)
             
             # 7. Copia sistema
-            self.log("📋 Copiando file sistema...")
+            self.log("📋 Copiando database e creando file sistema...")
             self.copy_system_files()
             
             # 8. Crea launcher
@@ -354,12 +360,42 @@ class SimpleRAGInstaller:
         shutil.copytree(self.source_db_path, db_dest)
         
         # Salva API key
-        (self.install_dir / ".api_key").write_text(self.api_key)
+        (self.install_dir / ".api_key").write_text(self.api_key, encoding='utf-8')
         
-        # Crea file Python
-        (self.install_dir / "rag_system.py").write_text(self.get_rag_system_code())
-        (self.install_dir / "web_app.py").write_text(self.get_web_app_code())
-        (self.install_dir / "launcher.py").write_text(self.get_launcher_code())
+        # Crea file Python - METODO SICURO
+        self.create_python_files()
+    
+    def create_python_files(self):
+        """Crea file Python in modo sicuro"""
+        # Crea rag_system.py
+        rag_file = self.install_dir / "rag_system.py"
+        rag_file.write_text(self.get_rag_system_code(), encoding='utf-8')
+        self.log("✅ Creato rag_system.py")
+        
+        # Crea web_app.py
+        web_file = self.install_dir / "web_app.py"
+        web_file.write_text(self.get_web_app_code(), encoding='utf-8')
+        self.log("✅ Creato web_app.py")
+        
+        # Crea launcher.py - METODO SUPER SICURO
+        launcher_file = self.install_dir / "launcher.py"
+        launcher_content = self.get_launcher_code()
+        launcher_file.write_text(launcher_content, encoding='utf-8')
+        self.log("✅ Creato launcher.py")
+        
+        # Debug: verifica contenuto launcher
+        size = launcher_file.stat().st_size
+        self.log(f"🔍 Launcher.py: {size} bytes")
+        
+        # Test di lettura
+        try:
+            test_content = launcher_file.read_text(encoding='utf-8')
+            if "import os" in test_content and "def main" in test_content:
+                self.log("✅ Launcher.py validato")
+            else:
+                self.log("⚠️ Launcher.py sembra incompleto")
+        except Exception as e:
+            self.log(f"❌ Errore test launcher: {e}")
     
     def create_launcher(self):
         """Crea launcher Windows - FIX: Escape corretto"""
@@ -507,50 +543,54 @@ with col2:
 '''
     
     def get_launcher_code(self):
-        """Codice launcher.py - FIX: Escape corretto"""
-        # FIX: Usa triple quotes e gestisci escape correttamente
-        return """import os
-import sys
-import subprocess
-import webbrowser
-import time
-from pathlib import Path
-
-def main():
-    # Imposta API key
-    api_key_file = Path('.api_key')
-    if api_key_file.exists():
-        os.environ['OPENAI_API_KEY'] = api_key_file.read_text().strip()
-    
-    if not Path('Rag_db').exists():
-        print("❌ Database non trovato!")
-        input("Premi Invio...")
-        return 1
-    
-    print("✅ Avviando sistema...")
-    
-    try:
-        subprocess.Popen([
-            sys.executable, "-m", "streamlit", "run", "web_app.py",
-            "--server.address", "localhost", "--server.port", "8501",
-            "--browser.gatherUsageStats", "false", "--server.headless", "true"
-        ])
+        """Codice launcher.py - VERSIONE ULTRA SICURA"""
+        # Uso concatenazione per evitare problemi di escape
+        launcher_lines = [
+            "import os",
+            "import sys", 
+            "import subprocess",
+            "import webbrowser",
+            "import time",
+            "from pathlib import Path",
+            "",
+            "def main():",
+            "    # Imposta API key",
+            "    api_key_file = Path('.api_key')",
+            "    if api_key_file.exists():",
+            "        os.environ['OPENAI_API_KEY'] = api_key_file.read_text().strip()",
+            "",
+            "    if not Path('Rag_db').exists():",
+            "        print('Database non trovato!')",
+            "        input('Premi Invio...')",
+            "        return 1",
+            "",
+            "    print('Avviando sistema...')",
+            "",
+            "    try:",
+            "        subprocess.Popen([",
+            "            sys.executable, '-m', 'streamlit', 'run', 'web_app.py',",
+            "            '--server.address', 'localhost', '--server.port', '8501',",
+            "            '--browser.gatherUsageStats', 'false', '--server.headless', 'true'",
+            "        ])",
+            "",
+            "        time.sleep(3)",
+            "        webbrowser.open('http://localhost:8501')",
+            "        print('Sistema avviato: http://localhost:8501')",
+            "",
+            "        input('Premi Invio per chiudere...')",
+            "        return 0",
+            "",
+            "    except Exception as e:",
+            "        print(f'Errore: {e}')",
+            "        input('Premi Invio...')",
+            "        return 1",
+            "",
+            "if __name__ == '__main__':",
+            "    sys.exit(main())",
+            ""
+        ]
         
-        time.sleep(3)
-        webbrowser.open('http://localhost:8501')
-        print("🌐 Sistema avviato: http://localhost:8501")
-        
-        input("Premi Invio per chiudere...")
-        return 0
-        
-    except Exception as e:
-        print(f"❌ Errore: {e}")
-        input("Premi Invio...")
-        return 1
-
-if __name__ == "__main__":
-    sys.exit(main())
-"""
+        return "\n".join(launcher_lines)
 
 if __name__ == "__main__":
     app = SimpleRAGInstaller()
