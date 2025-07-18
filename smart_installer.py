@@ -294,6 +294,10 @@ class SimpleRAGInstaller:
             self.log("📦 Installando pacchetti...")
             self.install_packages_simple(python_dir)
             
+            # 6.5. Installa Visual C++ Redistributable per ChromaDB
+            self.log("🔧 Verificando dipendenze Windows per ChromaDB...")
+            self.install_vcredist_if_needed()
+            
             # 7. Copia sistema
             self.log("📋 Copiando database e creando file sistema...")
             self.copy_system_files()
@@ -332,17 +336,100 @@ class SimpleRAGInstaller:
         subprocess.run([str(python_exe), str(get_pip_path)], cwd=str(python_dir), check=True)
     
     def install_packages_simple(self, python_dir):
-        """Installa pacchetti - SEMPLICE"""
+        """Installa pacchetti - SEMPLICE + FIX ChromaDB Windows"""
         python_exe = python_dir / "python.exe"
         
-        packages = ["openai", "chromadb", "streamlit", "PyMuPDF", "Pillow", "nltk"]
+        # FIX: Installa prima le dipendenze C++ runtime per ChromaDB
+        packages = [
+            "openai", 
+            "streamlit", 
+            "PyMuPDF", 
+            "Pillow", 
+            "nltk",
+            "chromadb==0.4.15"  # Versione specifica più stabile su Windows
+        ]
         
         for package in packages:
             self.log(f"  📦 {package}...")
-            # USA PERCORSO ESPLICITO - FIX Windows aliases
-            subprocess.run([
-                str(python_exe), "-m", "pip", "install", package, "--no-warn-script-location"
-            ], cwd=str(python_dir), check=True)
+            try:
+                # USA PERCORSO ESPLICITO - FIX Windows aliases
+                subprocess.run([
+                    str(python_exe), "-m", "pip", "install", package, 
+                    "--no-warn-script-location", "--no-cache-dir"
+                ], cwd=str(python_dir), check=True)
+            except subprocess.CalledProcessError as e:
+                self.log(f"⚠️ Errore {package}: {e}")
+                # Fallback per ChromaDB
+                if "chromadb" in package:
+                    self.log("🔄 Tentativo ChromaDB alternativo...")
+                    subprocess.run([
+                        str(python_exe), "-m", "pip", "install", "chromadb==0.4.14", 
+                        "--no-warn-script-location", "--no-cache-dir"
+                    ], cwd=str(python_dir), check=True)
+    
+    def install_vcredist_if_needed(self):
+        """Installa Visual C++ Redistributable se necessario per ChromaDB"""
+        try:
+            # Controlla se le librerie sono già disponibili
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            self.log("✅ Librerie C++ runtime già disponibili")
+            return
+        except:
+            pass
+        
+        # Informa l'utente
+        self.log("⚠️ ChromaDB richiede Microsoft Visual C++ Redistributable")
+        
+        # Download automatico se l'utente accetta
+        response = messagebox.askyesno(
+            "Dipendenze ChromaDB",
+            "ChromaDB richiede Microsoft Visual C++ Redistributable x64.\n\n"
+            "Vuoi scaricare e installare automaticamente?\n"
+            "(Necessario per il funzionamento del sistema RAG)"
+        )
+        
+        if response:
+            try:
+                self.log("📥 Scaricando Visual C++ Redistributable...")
+                vcredist_url = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+                vcredist_path = self.install_dir / "vc_redist.x64.exe"
+                
+                urllib.request.urlretrieve(vcredist_url, vcredist_path)
+                self.log("✅ Download completato")
+                
+                # Chiedi conferma per installazione
+                install_now = messagebox.askyesno(
+                    "Installa Dipendenze",
+                    "Visual C++ Redistributable scaricato.\n\n"
+                    "Installare ora? (Richiede privilegi amministratore)"
+                )
+                
+                if install_now:
+                    self.log("🔧 Avviando installazione VC++ Redistributable...")
+                    subprocess.run([str(vcredist_path), "/quiet"], check=False)
+                    self.log("✅ Installazione completata")
+                    
+                    # Pulizia
+                    vcredist_path.unlink()
+                else:
+                    self.log("ℹ️ Installazione rimandata - file salvato in: " + str(vcredist_path))
+                    
+            except Exception as e:
+                self.log(f"⚠️ Errore download VC++ Redistributable: {e}")
+                messagebox.showwarning(
+                    "Download Fallito",
+                    "Scarica manualmente da:\n"
+                    "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+                )
+        else:
+            self.log("ℹ️ Installazione VC++ Redistributable saltata")
+            messagebox.showinfo(
+                "Installazione Manuale",
+                "Ricorda di installare Visual C++ Redistributable x64\n"
+                "da: https://aka.ms/vs/17/release/vc_redist.x64.exe\n\n"
+                "Il sistema RAG non funzionerà senza questa dipendenza!"
+            )
     
     def copy_system_files(self):
         """Copia file sistema - FIX: Gestione corretta source_db_path"""
@@ -543,8 +630,8 @@ with col2:
 '''
     
     def get_launcher_code(self):
-        """Codice launcher.py - VERSIONE ULTRA SICURA"""
-        # Uso concatenazione per evitare problemi di escape
+        """Codice launcher.py - VERSIONE CON FIX ChromaDB"""
+        # Uso concatenazione per evitare problemi di escape + FIX ChromaDB
         launcher_lines = [
             "import os",
             "import sys", 
@@ -553,18 +640,51 @@ with col2:
             "import time",
             "from pathlib import Path",
             "",
+            "def test_chromadb():",
+            "    '''Test ChromaDB e suggerimenti per errori Windows'''",
+            "    try:",
+            "        import chromadb",
+            "        print('✅ ChromaDB importato correttamente')",
+            "        return True",
+            "    except ImportError as e:",
+            "        if 'chroma_rust_buildings' in str(e) or 'DLL load failed' in str(e):",
+            "            print('❌ ERRORE ChromaDB: Mancano librerie C++ Windows')",
+            "            print('🔧 SOLUZIONE:')",
+            "            print('   1. Scarica: Microsoft Visual C++ Redistributable x64')",
+            "            print('   2. Link: https://aka.ms/vs/17/release/vc_redist.x64.exe')",
+            "            print('   3. Installa e riavvia')",
+            "            input('Premi Invio dopo aver installato VC++ Redistributable...')",
+            "            return False",
+            "        else:",
+            "            print(f'❌ Errore ChromaDB: {e}')",
+            "            return False",
+            "",
             "def main():",
+            "    print('🧠 Sistema RAG Psicologia - Avvio')",
+            "    print('=' * 40)",
+            "",
             "    # Imposta API key",
             "    api_key_file = Path('.api_key')",
             "    if api_key_file.exists():",
             "        os.environ['OPENAI_API_KEY'] = api_key_file.read_text().strip()",
-            "",
-            "    if not Path('Rag_db').exists():",
-            "        print('Database non trovato!')",
+            "        print('✅ API Key caricata')",
+            "    else:",
+            "        print('❌ API Key non trovata')",
             "        input('Premi Invio...')",
             "        return 1",
             "",
-            "    print('Avviando sistema...')",
+            "    # Verifica database",
+            "    if not Path('Rag_db').exists():",
+            "        print('❌ Database Rag_db non trovato!')",
+            "        input('Premi Invio...')",
+            "        return 1",
+            "    print('✅ Database trovato')",
+            "",
+            "    # Test ChromaDB",
+            "    if not test_chromadb():",
+            "        return 1",
+            "",
+            "    print('🌐 Avviando interfaccia web...')",
             "",
             "    try:",
             "        subprocess.Popen([",
@@ -575,13 +695,14 @@ with col2:
             "",
             "        time.sleep(3)",
             "        webbrowser.open('http://localhost:8501')",
-            "        print('Sistema avviato: http://localhost:8501')",
+            "        print('✅ Sistema avviato: http://localhost:8501')",
+            "        print('❌ Per fermare: chiudi questa finestra')",
             "",
             "        input('Premi Invio per chiudere...')",
             "        return 0",
             "",
             "    except Exception as e:",
-            "        print(f'Errore: {e}')",
+            "        print(f'❌ Errore avvio: {e}')",
             "        input('Premi Invio...')",
             "        return 1",
             "",
