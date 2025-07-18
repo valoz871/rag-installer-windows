@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Smart Installer RAG - Versione SEMPLICE che funziona
-Basata su auto_setup.py originale + selezione database + fix Windows aliases
+Smart Installer RAG - Versione CORRETTA
+Fixes: source_db_path, launcher string escaping, database path mapping
 """
 
 import os
@@ -30,9 +30,10 @@ class SimpleRAGInstaller:
         self.install_dir = Path.cwd() / "RAG_Psicologia_Sistema"
         self.python_embedded_url = f"https://www.python.org/ftp/python/{self.python_version}/python-{self.python_version}-embed-amd64.zip"
         
-        # Variabili
+        # Variabili - FIX: Inizializza source_db_path
         self.api_key = ""
         self.setup_complete = False
+        self.source_db_path = None  # FIX: Aggiunti inizializzazione
         
         self.create_interface()
     
@@ -102,6 +103,16 @@ class SimpleRAGInstaller:
             font=("Arial", 9)
         ).pack(pady=5)
         
+        # Test database button
+        tk.Button(
+            main_frame,
+            text="✅ Testa Database",
+            command=self.test_database,
+            bg='#10b981',
+            fg='white',
+            font=("Arial", 9)
+        ).pack(pady=5)
+        
         # API Key
         tk.Label(
             main_frame,
@@ -156,18 +167,19 @@ class SimpleRAGInstaller:
             self.install_dir = Path(directory) / "RAG_Psicologia_Sistema"
     
     def choose_database(self):
-        """Scegli database"""
+        """Scegli database - FIX: Imposta source_db_path"""
         directory = filedialog.askdirectory(title="Scegli cartella Rag_db", initialdir=self.db_var.get())
         if directory:
             db_path = Path(directory)
             if self.validate_database(db_path):
                 self.db_var.set(str(db_path))
+                self.source_db_path = db_path  # FIX: Imposta il percorso sorgente
                 self.log("✅ Database selezionato: " + str(db_path))
             else:
                 messagebox.showerror("Database Non Valido", "La cartella non contiene un database RAG valido.")
     
     def auto_detect_database(self):
-        """Auto-rileva database"""
+        """Auto-rileva database - FIX: Imposta source_db_path"""
         search_paths = [
             Path.cwd() / "Rag_db",
             Path.cwd().parent / "Rag_db",
@@ -177,11 +189,22 @@ class SimpleRAGInstaller:
         for db_path in search_paths:
             if self.validate_database(db_path):
                 self.db_var.set(str(db_path))
+                self.source_db_path = db_path  # FIX: Imposta il percorso sorgente
                 self.log(f"✅ Database trovato: {db_path}")
                 messagebox.showinfo("Database Trovato", f"Database rilevato: {db_path}")
                 return
         
         messagebox.showwarning("Database Non Trovato", "Usa il pulsante 📂 per selezionare manualmente.")
+    
+    def test_database(self):
+        """Test database selezionato"""
+        db_path = Path(self.db_var.get())
+        if self.validate_database(db_path):
+            files_count = len(list(db_path.rglob('*')))
+            messagebox.showinfo("Database Valido", f"✅ Database valido!\nFile trovati: {files_count}")
+            self.source_db_path = db_path  # FIX: Imposta il percorso anche qui
+        else:
+            messagebox.showerror("Database Non Valido", "❌ La cartella non contiene un database RAG valido.")
     
     def validate_database(self, db_path):
         """Valida database"""
@@ -205,17 +228,22 @@ class SimpleRAGInstaller:
         self.root.update()
     
     def start_setup(self):
-        """Avvia setup"""
+        """Avvia setup con validazioni migliorate"""
         self.api_key = self.api_entry.get().strip()
         if not self.api_key or not self.api_key.startswith('sk-'):
             messagebox.showerror("Errore", "Inserisci API Key OpenAI valida (inizia con 'sk-')")
             return
         
-        # Verifica database
-        db_path = Path(self.db_var.get())
-        if not self.validate_database(db_path):
-            messagebox.showerror("Errore", "Database non valido. Usa auto-rileva o seleziona manualmente.")
-            return
+        # FIX: Verifica che source_db_path sia impostato
+        if self.source_db_path is None:
+            # Prova a impostarlo dal campo UI
+            db_path = Path(self.db_var.get())
+            if self.validate_database(db_path):
+                self.source_db_path = db_path
+                self.log(f"✅ Database impostato: {db_path}")
+            else:
+                messagebox.showerror("Errore", "Database non valido. Usa auto-rileva o seleziona manualmente.")
+                return
         
         self.install_dir = Path(self.dir_var.get()) / "RAG_Psicologia_Sistema"
         self.start_button.config(state='disabled', text="⏳ Installazione...")
@@ -311,11 +339,19 @@ class SimpleRAGInstaller:
             ], cwd=str(python_dir), check=True)
     
     def copy_system_files(self):
-        """Copia file sistema"""
+        """Copia file sistema - FIX: Gestione corretta source_db_path"""
+        # FIX: Verifica che source_db_path sia impostato
+        if self.source_db_path is None:
+            # Fallback: usa il percorso dal campo UI
+            self.source_db_path = Path(self.db_var.get())
+            
+        if not self.source_db_path.exists():
+            raise Exception(f"Database sorgente non trovato: {self.source_db_path}")
+        
         # Copia database
-        db_source = Path(self.db_var.get())
         db_dest = self.install_dir / "Rag_db"
-        shutil.copytree(db_source, db_dest)
+        self.log(f"📂 Copiando database: {self.source_db_path} → {db_dest}")
+        shutil.copytree(self.source_db_path, db_dest)
         
         # Salva API key
         (self.install_dir / ".api_key").write_text(self.api_key)
@@ -326,19 +362,20 @@ class SimpleRAGInstaller:
         (self.install_dir / "launcher.py").write_text(self.get_launcher_code())
     
     def create_launcher(self):
-        """Crea launcher Windows"""
+        """Crea launcher Windows - FIX: Escape corretto"""
+        # FIX: Usa raw string per evitare problemi di escape
         launcher_content = f'''@echo off
 cd /d "{self.install_dir}"
 echo 🧠 Avviando Sistema RAG...
 python\\python.exe launcher.py
 if errorlevel 1 pause
 '''
-        (self.install_dir / "🚀 AVVIA_RAG_PSICOLOGIA.bat").write_text(launcher_content)
+        (self.install_dir / "🚀 AVVIA_RAG_PSICOLOGIA.bat").write_text(launcher_content, encoding='utf-8')
     
     def setup_finished(self):
         """Setup completato"""
         self.start_button.config(state='normal', text="✅ Completato", bg='#10b981')
-        messagebox.showinfo("Completato!", f"Sistema installato in:\\n{self.install_dir}")
+        messagebox.showinfo("Completato!", f"Sistema installato in:\n{self.install_dir}")
     
     def setup_failed(self):
         """Setup fallito"""
@@ -470,8 +507,9 @@ with col2:
 '''
     
     def get_launcher_code(self):
-        """Codice launcher.py"""
-        return '''import os
+        """Codice launcher.py - FIX: Escape corretto"""
+        # FIX: Usa triple quotes e gestisci escape correttamente
+        return """import os
 import sys
 import subprocess
 import webbrowser
@@ -512,7 +550,7 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-'''
+"""
 
 if __name__ == "__main__":
     app = SimpleRAGInstaller()
