@@ -28,8 +28,8 @@ import zipfile
 class CompleteRAGInstaller:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("🧠 Sistema RAG Psicologia - Installer Completo")
-        self.root.geometry("800x700")
+        self.root.title("Sistema RAG Psicologia - Installer")  # Titolo più corto
+        self.root.geometry("750x550")  # MOLTO PIU' PICCOLO per 800x600
         self.root.configure(bg='#f0f8ff')
         self.root.resizable(False, False)
         
@@ -46,28 +46,21 @@ class CompleteRAGInstaller:
     def create_interface(self):
         """Create installer GUI"""
         
-        # Header
-        header_frame = tk.Frame(self.root, bg='#1e3a8a', height=80)  # Ridotto da 100 a 80
+        # Header MINI per risparmiare spazio
+        header_frame = tk.Frame(self.root, bg='#1e3a8a', height=50)  # Molto ridotto
         header_frame.pack(fill='x')
         header_frame.pack_propagate(False)
         
         title_label = tk.Label(
             header_frame,
-            text="Sistema RAG Psicologia",
-            font=("Arial", 20, "bold"),  # Ridotto da 24 a 20
+            text="RAG Psicologia Installer",  # Titolo più corto
+            font=("Arial", 14, "bold"),  # Molto ridotto
             fg="white",
             bg='#1e3a8a'
         )
-        title_label.pack(pady=10)  # Ridotto da 15 a 10
+        title_label.pack(pady=5)
         
-        subtitle_label = tk.Label(
-            header_frame,
-            text="Installer Automatico Completo per Windows",
-            font=("Arial", 10),  # Ridotto da 12 a 10
-            fg="#a5b4fc", 
-            bg='#1e3a8a'
-        )
-        subtitle_label.pack()
+        # NIENTE subtitle per risparmiare spazio
         
         # SCROLLABLE MAIN CONTENT - FIX PER RISOLUZIONI PICCOLE
         canvas = tk.Canvas(self.root, bg='#f0f8ff')
@@ -420,47 +413,173 @@ class CompleteRAGInstaller:
         self.log_message(f"Directory di installazione creata: {self.install_dir}")
     
     def check_and_install_python(self):
-        """Check if Python is installed, install if needed"""
+        """Check if Python is installed, install if needed - WITH DETAILED DEBUG"""
         python_installed = False
+        
+        self.log_message("=== CONTROLLO PYTHON ===")
         
         # Check if Python is already available
         try:
-            result = subprocess.run(["python", "--version"], capture_output=True, text=True)
+            self.log_message("Verificando se Python è già installato...")
+            result = subprocess.run(["python", "--version"], capture_output=True, text=True, timeout=10)
             if result.returncode == 0 and "Python 3" in result.stdout:
-                self.log_message(f"Python già installato: {result.stdout.strip()}")
+                self.log_message(f"TROVATO: {result.stdout.strip()}")
                 python_installed = True
+            else:
+                self.log_message(f"Python comando fallito: return code {result.returncode}")
+                if result.stdout:
+                    self.log_message(f"STDOUT: {result.stdout}")
+                if result.stderr:
+                    self.log_message(f"STDERR: {result.stderr}")
         except FileNotFoundError:
-            pass
+            self.log_message("Comando 'python' non trovato nel PATH")
+        except subprocess.TimeoutExpired:
+            self.log_message("Timeout verificando Python esistente")
+        except Exception as e:
+            self.log_message(f"Errore check Python: {e}")
+        
+        # Try python3 command as well
+        if not python_installed:
+            try:
+                self.log_message("Provando comando 'python3'...")
+                result = subprocess.run(["python3", "--version"], capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    self.log_message(f"TROVATO python3: {result.stdout.strip()}")
+                    python_installed = True
+            except:
+                self.log_message("Comando 'python3' non disponibile")
         
         if not python_installed:
-            self.log_message("Python non trovato, procedendo con l'installazione...")
+            self.log_message("Python non trovato - procedendo con installazione...")
+            
+            try:
+                # Check internet connection first
+                self.log_message("Testando connessione internet...")
+                test_conn = urllib.request.urlopen("https://www.google.com", timeout=10)
+                self.log_message(f"Connessione OK: status {test_conn.getcode()}")
+                test_conn.close()
+            except Exception as e:
+                self.log_message(f"ERRORE connessione internet: {e}")
+                raise Exception("Connessione internet necessaria per scaricare Python")
+            
+            # Check disk space
+            try:
+                import shutil
+                total, used, free = shutil.disk_usage(str(self.install_dir.parent))
+                free_gb = free / (1024**3)
+                self.log_message(f"Spazio libero: {free_gb:.1f} GB")
+                if free_gb < 1.0:
+                    raise Exception(f"Spazio insufficiente: {free_gb:.1f} GB disponibili, richiesto almeno 1 GB")
+            except Exception as e:
+                self.log_message(f"Errore check spazio disco: {e}")
             
             # Download Python installer
             python_installer = self.install_dir / f"python-{self.python_version}-installer.exe"
             
             self.log_message(f"Scaricando Python {self.python_version}...")
-            urllib.request.urlretrieve(self.python_url, python_installer)
+            self.log_message(f"URL: {self.python_url}")
+            self.log_message(f"Destinazione: {python_installer}")
             
-            self.log_message("Installando Python (questo può richiedere alcuni minuti)...")
-            # Install Python silently for all users
-            subprocess.run([
+            try:
+                # Download with progress
+                def download_progress(block_num, block_size, total_size):
+                    if total_size > 0:
+                        percent = (block_num * block_size / total_size) * 100
+                        if percent <= 100:
+                            self.log_message(f"Download: {percent:.1f}%")
+                
+                urllib.request.urlretrieve(self.python_url, python_installer, reporthook=download_progress)
+                
+                # Verify download
+                size_mb = python_installer.stat().st_size / (1024 * 1024)
+                self.log_message(f"Download completato: {size_mb:.1f} MB")
+                
+                if size_mb < 10:  # Python installer should be at least 10MB
+                    raise Exception(f"Download corrotto: dimensione {size_mb:.1f} MB troppo piccola")
+                    
+            except Exception as e:
+                self.log_message(f"ERRORE download Python: {e}")
+                raise Exception(f"Impossibile scaricare Python: {e}")
+            
+            # Install Python
+            self.log_message("Avviando installazione Python...")
+            self.log_message("NOTA: Potrebbe richiedere privilegi amministratore")
+            
+            install_cmd = [
                 str(python_installer),
-                "/quiet",
-                "InstallAllUsers=1",
-                "PrependPath=1",
-                "Include_test=0"
-            ], check=True)
+                "/quiet",           # Silent install
+                "InstallAllUsers=1", # For all users
+                "PrependPath=1",    # Add to PATH
+                "Include_test=0",   # Don't include tests
+                "SimpleInstall=1"   # Simple installation
+            ]
+            
+            self.log_message(f"Comando installazione: {' '.join(install_cmd)}")
+            
+            try:
+                result = subprocess.run(install_cmd, capture_output=True, text=True, timeout=600)  # 10 minutes max
+                
+                self.log_message(f"Installazione Python terminata con codice: {result.returncode}")
+                
+                if result.stdout:
+                    self.log_message(f"STDOUT: {result.stdout}")
+                if result.stderr:
+                    self.log_message(f"STDERR: {result.stderr}")
+                
+                if result.returncode != 0:
+                    self.log_message("ERRORE: Installazione Python fallita!")
+                    self.log_message("Possibili cause:")
+                    self.log_message("1. Privilegi amministratore insufficienti")
+                    self.log_message("2. Antivirus che blocca installazione")
+                    self.log_message("3. Python già installato in modo conflittuale")
+                    self.log_message("4. Sistema operativo non supportato")
+                    
+                    raise Exception(f"Installazione Python fallita con codice {result.returncode}")
+                
+            except subprocess.TimeoutExpired:
+                self.log_message("TIMEOUT: Installazione Python troppo lenta (>10 minuti)")
+                raise Exception("Installazione Python timeout")
+            except Exception as e:
+                self.log_message(f"ERRORE esecuzione installer Python: {e}")
+                raise Exception(f"Errore installazione Python: {e}")
             
             # Clean up installer
-            python_installer.unlink()
+            try:
+                python_installer.unlink()
+                self.log_message("File installer rimosso")
+            except:
+                self.log_message("Impossibile rimuovere installer (non critico)")
             
-            self.log_message("Python installato con successo")
+            self.log_message("Attendendo completamento installazione Python...")
+            time.sleep(10)  # Wait for installation to fully complete
             
-            # Verify installation
-            time.sleep(5)  # Wait for installation to complete
-            result = subprocess.run(["python", "--version"], capture_output=True, text=True)
-            if result.returncode != 0:
-                raise Exception("Python installation failed")
+            # Verify installation worked
+            self.log_message("Verificando installazione Python...")
+            max_retries = 5
+            for attempt in range(max_retries):
+                try:
+                    result = subprocess.run(["python", "--version"], capture_output=True, text=True, timeout=10)
+                    if result.returncode == 0 and "Python 3" in result.stdout:
+                        self.log_message(f"SUCCESSO: Python installato - {result.stdout.strip()}")
+                        python_installed = True
+                        break
+                    else:
+                        self.log_message(f"Tentativo {attempt+1}: Python non ancora disponibile")
+                        time.sleep(3)
+                except Exception as e:
+                    self.log_message(f"Tentativo {attempt+1}: Errore verifica - {e}")
+                    time.sleep(3)
+            
+            if not python_installed:
+                self.log_message("ERRORE: Python installato ma non disponibile nel PATH")
+                self.log_message("Possibili soluzioni:")
+                self.log_message("1. Riavviare il computer")
+                self.log_message("2. Installare Python manualmente da python.org")
+                self.log_message("3. Aggiungere Python al PATH manualmente")
+                raise Exception("Python installato ma non funzionante - riavviare sistema")
+        
+        self.log_message("=== CONTROLLO PYTHON COMPLETATO ===")
+        return python_installed
     
     def install_python_packages(self):
         """Install required Python packages"""
