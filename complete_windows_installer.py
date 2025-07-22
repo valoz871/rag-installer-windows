@@ -31,8 +31,7 @@ class CompleteRAGInstaller:
         self.root.title("Sistema RAG Psicologia - Installer")  # Titolo più corto
         self.root.geometry("750x550")  # MOLTO PIU' PICCOLO per 800x600
         self.root.configure(bg='#f0f8ff')
-        self.root.resizable(True, True)  # RESO RIDIMENSIONABILE per schermi piccoli
-        self.root.minsize(600, 450)  # Dimensioni minime
+        self.root.resizable(False, False)
         
         # Configuration
         self.python_version = "3.11.9"
@@ -63,9 +62,16 @@ class CompleteRAGInstaller:
         
         # NIENTE subtitle per risparmiare spazio
         
-        # SCROLLABLE MAIN CONTENT - SOLUZIONE SEMPLICE E SICURA
-        canvas = tk.Canvas(self.root, bg='#f0f8ff')
-        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        # SCROLLABLE MAIN CONTENT - CON SCROLL ORIZZONTALE
+        # Frame container per scrollbars
+        scroll_container = tk.Frame(self.root, bg='#f0f8ff')
+        scroll_container.pack(fill='both', expand=True, padx=20)
+        
+        # Canvas con scrollbars VERTICALE E ORIZZONTALE
+        canvas = tk.Canvas(scroll_container, bg='#f0f8ff')
+        v_scrollbar = tk.Scrollbar(scroll_container, orient="vertical", command=canvas.yview)
+        h_scrollbar = tk.Scrollbar(scroll_container, orient="horizontal", command=canvas.xview)
+        
         scrollable_frame = tk.Frame(canvas, bg='#f0f8ff')
         
         scrollable_frame.bind(
@@ -74,14 +80,16 @@ class CompleteRAGInstaller:
         )
         
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
         
-        # Pack canvas e scrollbar
-        canvas.pack(side="left", fill="both", expand=True, padx=15)
-        scrollbar.pack(side="right", fill="y")
+        # Pack scrollbars e canvas
+        h_scrollbar.pack(side="bottom", fill="x")
+        v_scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
         
-        # Main content ottimizzato per schermi piccoli
-        main_frame = tk.Frame(scrollable_frame, bg='#f0f8ff', padx=5, pady=10)
+        # Main content (ora dentro scrollable_frame invece di main_frame)
+        main_frame = tk.Frame(scrollable_frame, bg='#f0f8ff', padx=10, pady=15)  # Ridotto padding
+        main_frame.pack(fill='both', expand=True)
         
         # Welcome message (molto più compatto)
         welcome_text = tk.Label(
@@ -91,7 +99,7 @@ class CompleteRAGInstaller:
             bg='#f0f8ff',
             fg='#374151',
             justify='left',
-            wraplength=650  # Ridotto per adattarsi meglio
+            wraplength=700
         )
         welcome_text.pack(pady=5)  # Molto ridotto
         
@@ -213,7 +221,7 @@ class CompleteRAGInstaller:
         self.progress_bar = ttk.Progressbar(
             progress_frame,
             mode='determinate',
-            length=650  # Ridotto per adattarsi meglio
+            length=700
         )
         self.progress_bar.pack(pady=4, padx=10)  # Ridotto
         
@@ -255,29 +263,13 @@ class CompleteRAGInstaller:
         
         # Bind mousewheel to canvas for scrolling VERTICALE E ORIZZONTALE
         def _on_mousewheel(event):
-            # Scroll verticale con mouse wheel normale
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         
         def _on_shift_mousewheel(event):
-            # Scroll orizzontale con Shift + mouse wheel
             canvas.xview_scroll(int(-1*(event.delta/120)), "units")
         
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
         canvas.bind_all("<Shift-MouseWheel>", _on_shift_mousewheel)
-        
-        # Bind arrow keys per navigazione con tastiera
-        def _on_key(event):
-            if event.keysym == 'Left':
-                canvas.xview_scroll(-1, "units")
-            elif event.keysym == 'Right':
-                canvas.xview_scroll(1, "units")
-            elif event.keysym == 'Up':
-                canvas.yview_scroll(-1, "units")
-            elif event.keysym == 'Down':
-                canvas.yview_scroll(1, "units")
-        
-        canvas.bind_all("<Key>", _on_key)
-        canvas.focus_set()  # Per ricevere eventi tastiera
     
     def choose_directory(self):
         """Choose installation directory"""
