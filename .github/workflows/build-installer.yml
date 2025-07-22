@@ -2,7 +2,7 @@ name: Build RAG Installer EXE
 
 on:
   push:
-    branches: [ main, master, installer-development]
+    branches: [ main, master ]
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
@@ -30,16 +30,18 @@ jobs:
       run: |
         mkdir release_package
         copy dist\RAG_Psicologia_Installer.exe release_package\
-        echo "# RAG Psicologia - Installer Windows" > release_package\README.txt
-        echo. >> release_package\README.txt
-        echo "ISTRUZIONI:" >> release_package\README.txt
-        echo "1. Assicurati di avere la cartella 'Rag_db' con il database" >> release_package\README.txt
-        echo "2. Esegui RAG_Psicologia_Installer.exe" >> release_package\README.txt
-        echo "3. Segui le istruzioni dell'installer" >> release_package\README.txt
-        echo "4. Inserisci la tua API Key OpenAI" >> release_package\README.txt
-        echo "5. Seleziona la cartella Rag_db" >> release_package\README.txt
-        echo "6. Attendi l'installazione (5-10 minuti)" >> release_package\README.txt
-        echo "7. Usa il collegamento sul desktop per avviare" >> release_package\README.txt
+        @"
+        # RAG Psicologia - Installer Windows
+        
+        ISTRUZIONI:
+        1. Assicurati di avere la cartella 'Rag_db' con il database
+        2. Esegui RAG_Psicologia_Installer.exe
+        3. Segui le istruzioni dell'installer
+        4. Inserisci la tua API Key OpenAI
+        5. Seleziona la cartella Rag_db
+        6. Attendi l'installazione (5-10 minuti)
+        7. Usa il collegamento sul desktop per avviare
+        "@ | Out-File -FilePath "release_package\README.txt" -Encoding UTF8
     
     - name: Upload Installer
       uses: actions/upload-artifact@v4
