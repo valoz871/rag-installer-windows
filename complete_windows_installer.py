@@ -31,7 +31,8 @@ class CompleteRAGInstaller:
         self.root.title("Sistema RAG Psicologia - Installer")  # Titolo più corto
         self.root.geometry("750x550")  # MOLTO PIU' PICCOLO per 800x600
         self.root.configure(bg='#f0f8ff')
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)  # RESO RIDIMENSIONABILE per schermi piccoli
+        self.root.minsize(600, 450)  # Dimensioni minime
         
         # Configuration
         self.python_version = "3.11.9"
@@ -62,16 +63,9 @@ class CompleteRAGInstaller:
         
         # NIENTE subtitle per risparmiare spazio
         
-        # SCROLLABLE MAIN CONTENT - FIX PER RISOLUZIONI PICCOLE CON SCROLL ORIZZONTALE
-        # Frame container per scrollbars
-        scroll_frame = tk.Frame(self.root, bg='#f0f8ff')
-        scroll_frame.pack(fill='both', expand=True, padx=10, pady=10)
-        
-        # Canvas con scrollbars verticale E orizzontale
-        canvas = tk.Canvas(scroll_frame, bg='#f0f8ff')
-        v_scrollbar = tk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
-        h_scrollbar = tk.Scrollbar(scroll_frame, orient="horizontal", command=canvas.xview)
-        
+        # SCROLLABLE MAIN CONTENT - SOLUZIONE SEMPLICE E SICURA
+        canvas = tk.Canvas(self.root, bg='#f0f8ff')
+        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas, bg='#f0f8ff')
         
         scrollable_frame.bind(
@@ -80,21 +74,14 @@ class CompleteRAGInstaller:
         )
         
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        canvas.configure(yscrollcommand=scrollbar.set)
         
-        # Pack scrollbars e canvas con grid per posizionamento preciso
-        canvas.grid(row=0, column=0, sticky="nsew")
-        v_scrollbar.grid(row=0, column=1, sticky="ns")
-        h_scrollbar.grid(row=1, column=0, sticky="ew")
+        # Pack canvas e scrollbar
+        canvas.pack(side="left", fill="both", expand=True, padx=15)
+        scrollbar.pack(side="right", fill="y")
         
-        # Configura grid weights per espansione
-        scroll_frame.grid_rowconfigure(0, weight=1)
-        scroll_frame.grid_columnconfigure(0, weight=1)
-        
-        # Main content con larghezza minima fissa per evitare compressione eccessiva
-        main_frame = tk.Frame(scrollable_frame, bg='#f0f8ff', padx=10, pady=15, width=700)  # Larghezza minima
-        main_frame.pack(fill='both', expand=True)
-        main_frame.pack_propagate(False)  # Mantiene larghezza minima
+        # Main content ottimizzato per schermi piccoli
+        main_frame = tk.Frame(scrollable_frame, bg='#f0f8ff', padx=5, pady=10)
         
         # Welcome message (molto più compatto)
         welcome_text = tk.Label(
