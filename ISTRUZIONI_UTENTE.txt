@@ -1,45 +1,127 @@
-🧠 SISTEMA RAG PSICOLOGIA - GUIDA RAPIDA
-========================================
+🧠 SISTEMA RAG PSICOLOGIA - GUIDA RAPIDA WINDOWS
+========================================================
 
-⚠️ IMPORTANTE: PRIMA DI INIZIARE
+⚠️ PRIMA DI INIZIARE - CHECKLIST
 ================================
-Assicurati di avere ENTRAMBI nella stessa cartella:
-✅ RAG_Psicologia_Installer.exe
-✅ Cartella "Rag_db" (contiene il database dei documenti)
+✅ File RAG_Psicologia_Installer.exe scaricato
+✅ Cartella "Rag_db" con database disponibile
+✅ OpenAI API Key (inizia con "sk-", fornita dal creatore)
+✅ Windows 10/11 (64-bit)
+✅ Connessione internet attiva
 
-🚀 INSTALLAZIONE:
-================
-1. Doppio-click su RAG_Psicologia_Installer.exe  
-2. Inserisci API Key OpenAI (inizia con "sk-")
-3. L'installer controllerà automaticamente la presenza di Rag_db
-4. Aspetta installazione automatica (5-10 min)
-5. Si aprirà il browser automaticamente
+🚀 INSTALLAZIONE AUTOMATICA (5-10 MINUTI)
+==========================================
 
-🔍 ESEMPI DOMANDE:
-==================
-- "Qual è la differenza tra ansia e angoscia?"
-- "Come viene definito il transfert?"
-- "Caratteristiche del disturbo borderline?"
+1. AVVIO INSTALLER
+------------------
+• Doppio-click su RAG_Psicologia_Installer.exe
+• Se Windows chiede conferma: Click "Sì" o "Esegui comunque"
 
-🚀 AVVIO FUTURO:
-===============
-Dopo installazione, per usare il sistema:
-Doppio-click su "🚀 AVVIA_RAG_PSICOLOGIA.bat"
+2. CONFIGURAZIONE
+-----------------
+📁 Directory: Lascia default o scegli dove installare
+🗄️ Database: Click "Auto-Rileva" oppure "📂" per scegliere Rag_db
+🔑 API Key: Incolla la chiave OpenAI (verrà nascosta con ***)
 
-📁 STRUTTURA DISTRIBUZIONE:
-===========================
-📦 Pacchetto_RAG_Psicologia/
-├── RAG_Psicologia_Installer.exe  ← Installer 
-├── Rag_db/                       ← Database (ESSENZIALE!)
-│   ├── [file database...]
-└── ISTRUZIONI_UTENTE.txt         ← Questo file
+3. INSTALLAZIONE  
+----------------
+• Click "🚀 Installa Sistema Completo"
+• ATTENDI: L'installer scarica Python, installa librerie, copia database
+• DURATA: 5-10 minuti (dipende da connessione internet)
+• NON CHIUDERE: Lascia lavorare l'installer
 
-💡 PROBLEMI COMUNI:
-==================
-❌ "Database RAG non trovato"
-   → Verifica che cartella Rag_db sia nella stessa directory dell'installer
+4. COMPLETAMENTO
+----------------
+✅ Messaggio "Installazione Completata!"
+✅ Collegamento creato sul Desktop: "Sistema RAG Psicologia"
+✅ Sistema pronto per l'uso
 
-❌ "Errore API Key"  
-   → Verifica che inizi con "sk-" e sia quella fornita
+🌐 UTILIZZO DEL SISTEMA
+=======================
 
-❌ Connessione internet necessaria solo per installazione
+AVVIO
+-----
+• Doppio-click su "Sistema RAG Psicologia" (Desktop)
+• OPPURE esegui "Avvia_RAG_Psicologia.bat" nella cartella installazione
+• Il browser si apre automaticamente su: http://localhost:8501
+
+INTERFACCIA WEB
+---------------
+📝 Campo domanda: Scrivi la tua domanda di psicologia
+🎛️ Slider fonti: Scegli quante fonti consultare (3-8)
+🔍 Bottone ricerca: Click per ottenere risposta
+📚 Fonti: Espandi per vedere dettagli documenti consultati
+
+ESEMPI DOMANDE EFFICACI
+-----------------------
+• "Qual è la differenza tra ansia e angoscia?"
+• "Come viene definito il transfert in psicoterapia?"
+• "Caratteristiche del disturbo borderline di personalità?"
+• "Differenze tra Jung e Freud sull'inconscio?"
+• "Cosa sono i meccanismi di difesa secondo Freud?"
+• "Come si manifesta un episodio maniacale?"
+
+🔧 RISOLUZIONE PROBLEMI COMUNI
+===============================
+
+❌ "Errore durante installazione Python"
+SOLUZIONE:
+• Esegui installer come Amministratore (tasto destro → "Esegui come amministratore")
+• Disabilita temporaneamente antivirus
+• Assicurati di avere almeno 2GB spazio libero
+
+❌ "Database non trovato" o "Auto-Rileva fallisce"
+SOLUZIONE:
+• Usa pulsante 📂 per selezionare manualmente cartella Rag_db
+• Assicurati che Rag_db contenga file (non sia vuota)
+• Prova a copiare Rag_db sul Desktop
+
+❌ "API Key non valida"
+SOLUZIONE:
+• Verifica che la chiave inizi con "sk-"
+• Controlla di aver copiato la chiave completa (senza spazi)
+• Contatta chi ti ha fornito il sistema se persiste
+
+❌ "Sistema non si avvia" dopo installazione
+SOLUZIONE:
+• Riavvia il computer
+• Prova ad eseguire come amministratore
+• Controlla che porta 8501 sia libera (chiudi altri browser)
+
+❌ "Risposte non pertinenti" o "Sistema lento"
+SOLUZIONE:
+• Usa domande più specifiche e tecniche
+• Aumenta numero fonti con lo slider
+• Includi nomi di autori o teorie specifiche nelle domande
+
+🌐 CONNESSIONE E SICUREZZA
+==========================
+• Sistema funziona OFFLINE dopo installazione (eccetto OpenAI API)
+• Database rimane locale sul tuo computer
+• API Key salvata in modo sicuro localmente
+• Nessun dato personale inviato esternamente (solo domande a OpenAI)
+
+📞 SUPPORTO TECNICO
+===================
+Per problemi tecnici contatta il creatore del sistema includendo:
+• Screenshot dell'errore
+• Descrizione di cosa stavi facendo
+• Versione Windows (10/11)
+• Se errore durante installazione o utilizzo
+
+💡 CONSIGLI UTILI
+=================
+• Tieni aperta la finestra nera del launcher per vedere lo stato
+• Per chiudere sistema: chiudi finestra nera del launcher
+• Per riavviare: doppio-click collegamento desktop
+• Backup della cartella installazione consigliato
+
+🎉 SISTEMA INSTALLATO CON SUCCESSO!
+===================================
+Il tuo Sistema RAG Psicologia è ora pronto per consultare
+la knowledge base e rispondere alle tue domande professionali.
+
+Buona consultazione! 🧠📚✨
+
+---
+RAG Psicologia v1.0 - Installer Windows Automatico

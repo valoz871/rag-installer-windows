@@ -1,273 +1,145 @@
-# 🧠 SISTEMA RAG PSICOLOGIA - GUIDA COMPLETA v2.0
+# 🧠 Sistema RAG Psicologia - Installer Windows
 
-## ⚠️ PRIMA DI INIZIARE - IMPORTANTE!
+**Sistema di consultazione intelligente per documenti di psicologia con installer automatico per Windows.**
 
-### 📦 Cosa Ti Serve:
-1. **✅ RAG_Psicologia_Installer.exe** (l'installer scaricato)
-2. **✅ Cartella "Rag_db"** (contiene il database dei documenti)
-3. **✅ OpenAI API Key** (inizia con "sk-" - fornita dal creatore)
+## 🚀 Caratteristiche
 
-> **💡 NOVITÀ v2.0:** L'installer ora può trovare automaticamente il database anche se è in cartelle diverse!
+- ✅ **Installer EXE automatico** - Zero configurazione manuale
+- ✅ **Installa Python automaticamente** - Non richiede Python preinstallato  
+- ✅ **Sistema RAG completo** - ChromaDB + OpenAI + Streamlit
+- ✅ **Interface web intuitiva** - Facile da usare per non programmatori
+- ✅ **Database vettoriale** - Ricerca semantica avanzata
+- ✅ **Completamente portatile** - Sistema autocontenuto
+
+## 📦 Download
+
+### Per Utenti Finali (Windows):
+1. Vai alla sezione **[Releases](../../releases)**
+2. Scarica l'ultima versione: `RAG_Psicologia_Installer.exe`
+3. Scarica o assicurati di avere la cartella `Rag_db` con il database
+
+### Per Sviluppatori:
+```bash
+git clone https://github.com/tuouser/rag-psicologia.git
+cd rag-psicologia
+```
+
+## 🔧 Uso dell'Installer (Utenti Finali)
+
+### 1. Preparazione
+- ✅ Windows 10/11 (64-bit)
+- ✅ Connessione internet
+- ✅ OpenAI API Key (inizia con `sk-`)
+- ✅ Database RAG (cartella `Rag_db`)
+
+### 2. Installazione
+1. **Esegui** `RAG_Psicologia_Installer.exe`
+2. **Seleziona** directory di installazione (o lascia default)
+3. **Scegli** la cartella `Rag_db` (usa Auto-Rileva o Sfoglia)
+4. **Inserisci** la tua OpenAI API Key
+5. **Click** "Installa Sistema Completo"
+6. **Attendi** 5-10 minuti per l'installazione automatica
+
+### 3. Utilizzo
+- **Avvio**: Doppio-click sul collegamento desktop "Sistema RAG Psicologia"
+- **Interface**: Si apre automaticamente nel browser su `http://localhost:8501`
+- **Domande**: Inserisci domande di psicologia e ottieni risposte con fonti
+
+## 💻 Sviluppo
+
+### Build EXE Locale
+```bash
+pip install -r requirements.txt
+pyinstaller --onefile --windowed --name "RAG_Psicologia_Installer" complete_windows_installer.py
+```
+
+### Build Automatica (GitHub Actions)
+- **Push** su branch `main` triggera la build automatica
+- **Download** l'EXE da **Actions** → **Artifacts**
+- **Release** automatica per ogni build
+
+### Struttura Progetto
+```
+├── complete_windows_installer.py   # Installer principale
+├── .github/workflows/build-installer.yml   # GitHub Actions
+├── requirements.txt                # Dipendenze build
+├── README.md                      # Questo file
+└── brain.ico                     # Icona (opzionale)
+```
+
+## 🧠 Funzionalità Sistema RAG
+
+### Interfaccia Web
+- **Campo domanda** con esempi di prompt
+- **Slider fonti** per controllare numero documenti consultati
+- **Risultati strutturati** con risposte e fonti citate
+- **Preview fonti** con rilevanza e contenuto
+
+### Esempi di Domande
+- *"Qual è la differenza tra ansia e angoscia?"*
+- *"Come viene definito il transfert?"*
+- *"Caratteristiche del disturbo borderline?"*
+- *"Differenze tra Jung e Freud sull'inconscio?"*
+
+### Tecnologie
+- **ChromaDB** - Database vettoriale per ricerca semantica
+- **OpenAI** - Embeddings e generazione risposte (GPT-4)
+- **Streamlit** - Interfaccia web moderna e intuitiva
+- **Python** - Backend e orchestrazione
+
+## ⚙️ Configurazione
+
+### OpenAI API Key
+- Richiesta durante installazione
+- Salvata localmente in `.api_key`
+- Utilizzata per embeddings e generazione risposte
+
+### Database RAG
+- Formato: ChromaDB con embedding precalcolati
+- Contenuto: Documenti di psicologia processati
+- Dimensione tipica: 100-500MB
+
+## 🛠️ Risoluzione Problemi
+
+### Installer
+- **"Python non installabile"**: Esegui come amministratore
+- **"Database non trovato"**: Verifica percorso cartella Rag_db
+- **"API Key non valida"**: Controlla che inizi con "sk-"
+
+### Sistema RAG  
+- **"ChromaDB error"**: Reinstalla Visual C++ Redistributable
+- **"OpenAI timeout"**: Verifica connessione e quota API
+- **"Port 8501 busy"**: Chiudi altre istanze Streamlit
+
+### Log e Debug
+- Log installazione visibile nell'installer
+- Log sistema in console launcher
+- File di log salvati nella directory di installazione
+
+## 📞 Supporto
+
+### Per Utenti
+- Controlla prima la sezione **Risoluzione Problemi**
+- Includi screenshot degli errori
+- Specifica versione Windows
+
+### Per Sviluppatori
+- Apri **Issue** su GitHub
+- Includi log completi e passi per riprodurre
+- Testa prima con build locale
+
+## 📄 Licenza
+
+Progetto privato per uso specifico in ambito psicologico.
+
+## 🔄 Versioni
+
+### v1.0.x
+- ✅ Installer automatico Windows
+- ✅ Sistema RAG completo  
+- ✅ Interface Streamlit
+- ✅ Build GitHub Actions
 
 ---
 
-## 🚀 INSTALLAZIONE GUIDATA (SEMPLICE)
-
-### Passo 1: Preparazione
-- Assicurati di avere entrambi i file (installer + cartella Rag_db)
-- **NON** è necessario che siano nella stessa cartella
-- Hai bisogno di ~500MB di spazio libero
-
-### Passo 2: Avvio Installer
-1. **Doppio-click** su `RAG_Psicologia_Installer.exe`
-2. Se Windows chiede conferma, click **"Sì"** o **"Esegui comunque"**
-3. Si aprirà l'interfaccia dell'installer
-
-### Passo 3: Configurazione Smart
-**📁 Directory Installazione:**
-- Lascia il percorso predefinito OPPURE
-- Click 📂 per scegliere dove installare
-
-**🗄️ Database Rag_db:**
-- Click **"🔍 Auto-rileva"** per trovare automaticamente il database
-- OPPURE click 📂 per selezionarlo manualmente
-- Click **"✅ Testa Database"** per verificare che sia valido
-
-**🔑 API Key OpenAI:**
-- Inserisci la chiave fornita (inizia con "sk-")
-- Verrà nascosta con asterischi per sicurezza
-
-### Passo 4: Installazione
-1. Click **"🚀 Installa Sistema"**
-2. **Attendi 5-10 minuti** (download automatico Python + pacchetti)
-3. Segui la barra di progresso
-4. ✅ **Installazione completata!**
-
-### Passo 5: Primo Avvio
-- Il browser si aprirà automaticamente
-- Se non si apre: doppio-click su `🚀 AVVIA_RAG_PSICOLOGIA.bat`
-- Interfaccia disponibile su: http://localhost:8501
-
----
-
-## 🔍 NUOVE FUNZIONALITÀ v2.0
-
-### 🎯 Auto-Detection Intelligente
-- **Trova automaticamente** la cartella Rag_db ovunque sia
-- Cerca in cartelle comuni: Desktop, Download, directory progetto
-- **Validazione automatica** del database
-
-### 🛡️ Installazione Robusta
-- **Gestione errori completa** con retry automatico
-- **Progress bar dettagliata** per ogni fase
-- **Possibilità di annullare** durante l'installazione
-- **Test automatici** di tutti i componenti
-
-### 🧪 Test e Validazione
-- **Verifica automatica** di Python, pacchetti e database
-- **Test di integrazione** completo del sistema
-- **Messaggi di errore chiari** con soluzioni suggerite
-
----
-
-## 💭 COME USARE IL SISTEMA
-
-### Esempi di Domande Efficaci:
-
-**🧠 Concetti Teorici:**
-```
-"Qual è la differenza tra ansia e angoscia secondo Freud?"
-"Come viene definito il transfert in psicoanalisi?"
-"Caratteristiche del Super-Io nella teoria freudiana?"
-```
-
-**📊 Disturbi e Diagnosi:**
-```
-"Criteri diagnostici del disturbo borderline di personalità?"
-"Come si manifesta un episodio maniacale?"
-"Sintomi della depressione maggiore secondo il DSM-5?"
-```
-
-**🔄 Confronti Teorici:**
-```
-"Differenze tra Jung e Freud sull'inconscio?"
-"Approccio cognitivo vs psicodinamico alla depressione?"
-"Terapia sistemica vs terapia individuale?"
-```
-
-**🏥 Applicazioni Cliniche:**
-```
-"Tecniche di intervento per disturbi d'ansia?"
-"Come condurre un primo colloquio clinico?"
-"Strategie terapeutiche per adolescenti?"
-```
-
-### 🎛️ Opzioni Avanzate:
-- **Slider "Numero fonti"**: Più fonti = risposte più complete
-- **Visualizzazione fonti**: Vedi da quali documenti proviene ogni informazione
-- **Percentuale rilevanza**: Quanto ogni fonte è pertinente alla domanda
-
----
-
-## 🔧 RISOLUZIONE PROBLEMI
-
-### ❌ Errori Durante Installazione
-
-**"Auto-rileva non trova il database"**
-```
-✅ Soluzioni:
-• Usa il pulsante 📂 per selezionare manualmente la cartella Rag_db
-• Assicurati che la cartella contenga file (non sia vuota)
-• Prova a copiare Rag_db sul Desktop e riprova auto-rileva
-```
-
-**"Errore download Python"**
-```
-✅ Soluzioni:
-• Verifica connessione internet
-• Riprova l'installazione (l'installer riproverà automaticamente)
-• Disabilita temporaneamente antivirus
-```
-
-**"Installazione pacchetti fallita"**
-```
-✅ Soluzioni:
-• L'installer riprova automaticamente
-• Se persiste, verifica firewall/proxy aziendale
-• Prova da una rete diversa
-```
-
-**"Database non valido"**
-```
-✅ Soluzioni:
-• Usa "✅ Testa Database" per verificare
-• Assicurati di aver selezionato la cartella Rag_db corretta
-• Contatta chi ti ha fornito il sistema se il database è corrotto
-```
-
-### ❌ Errori Durante l'Uso
-
-**"Sistema RAG non configurato"**
-```
-✅ Soluzioni:
-• Riavvia tramite 🚀 AVVIA_RAG_PSICOLOGIA.bat
-• Verifica che file .api_key sia presente
-• Reinstalla se il problema persiste
-```
-
-**"Porta 8501 occupata"**
-```
-✅ Soluzioni:
-• Chiudi altre applicazioni Streamlit
-• Riavvia il computer
-• Usa Task Manager per chiudere processi python.exe
-```
-
-**"Errore OpenAI API"**
-```
-✅ Soluzioni:
-• Verifica che l'API Key sia corretta
-• Controlla credito disponibile sul tuo account OpenAI
-• Contatta il supporto se l'API Key non funziona
-```
-
-**"Risposte poco rilevanti"**
-```
-✅ Soluzioni:
-• Riformula la domanda con termini più specifici
-• Aumenta il numero di fonti consultate (slider)
-• Usa terminologia tecnica presente nei documenti
-• Specifica autore o approccio teorico
-```
-
----
-
-## 🏃‍♂️ AVVIO RAPIDO FUTURO
-
-Dopo la prima installazione:
-
-1. **Doppio-click** su `🚀 AVVIA_RAG_PSICOLOGIA.bat`
-2. **Attendi** apertura automatica browser
-3. **Inizia** a fare domande!
-
-> **🌐 Indirizzo locale:** http://localhost:8501  
-> **❌ Per chiudere:** Chiudi la finestra nera che si apre con il launcher
-
----
-
-## 📊 CARATTERISTICHE TECNICHE
-
-### 🛡️ Sicurezza e Privacy
-- ✅ **Completamente offline** dopo installazione
-- ✅ **Database locale**, nessun dato inviato esternamente
-- ✅ **API Key sicura**, memorizzata localmente
-- ✅ **Nessuna telemetria** o raccolta dati
-
-### ⚡ Performance
-- 🧠 **Motore AI**: OpenAI GPT-4 + Embeddings semantici
-- 🗃️ **Database**: ChromaDB vettoriale locale
-- ⚡ **Ricerca**: Risultati in millisecondi
-- 💾 **Dimensione**: ~200-300MB totali
-
-### 🔧 Sistema
-- 🐍 **Python**: 3.11.8 embedded (isolato)
-- 🌐 **Interfaccia**: Streamlit web app
-- 🖥️ **Compatibilità**: Windows 10/11 (64-bit)
-- 📦 **Portabilità**: Sistema completamente autocontenuto
-
----
-
-## 💡 CONSIGLI PER L'USO OTTIMALE
-
-### ✅ Domande che Funzionano Bene:
-- **Specifiche**: "Criteri DSM-5 per il disturbo bipolare"
-- **Comparative**: "Differenze tra Freud e Jung sull'Es"
-- **Tecniche**: "Come applicare la terapia cognitiva all'ansia"
-- **Con autore**: "Definizione di transfert secondo Lacan"
-
-### ❌ Domande Meno Efficaci:
-- **Troppo generiche**: "Dimmi tutto sulla psicologia"
-- **Senza contesto**: "Cos'è la depressione"
-- **Non presenti**: Argomenti non coperti dal database
-
-### 🎯 Massimizza l'Efficacia:
-1. **Usa termini tecnici** presenti nei documenti
-2. **Specifica l'approccio** teorico di interesse
-3. **Consulta sempre le fonti** mostrate per approfondire
-4. **Riprova con riformulazioni** se non soddisfatto
-5. **Aumenta le fonti** per argomenti complessi
-
----
-
-## 📞 SUPPORTO
-
-### 🆘 Serve Aiuto?
-Per problemi tecnici, contatta chi ti ha fornito il sistema con:
-
-📧 **Informazioni da includere:**
-- Screenshot dell'errore
-- Descrizione di cosa stavi facendo
-- Sistema operativo (Windows 10/11)
-- Se l'errore è durante installazione o uso
-
-🔧 **File di log utili:**
-- Messaggi nella finestra nera del launcher
-- Eventuali file di errore generati
-
----
-
-## 🎓 CONCLUSIONE
-
-Il **Sistema RAG Psicologia v2.0** ti permette di:
-
-✅ **Consultare rapidamente** migliaia di documenti di psicologia  
-✅ **Ottenere risposte precise** con citazioni delle fonti  
-✅ **Esplorare connessioni** tra diversi autori e approcci  
-✅ **Lavorare offline** in totale privacy  
-
-**Buona esplorazione del mondo della psicologia! 🧠📚✨**
-
----
-
-*Sistema RAG Psicologia v2.0 | Installer Robusto*  
-*Aggiornato: Dicembre 2024*
+**Creato per rendere la consultazione di documenti psicologici semplice e accessibile a tutti.** 🧠✨
