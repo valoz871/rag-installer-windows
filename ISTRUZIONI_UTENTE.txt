@@ -28,7 +28,7 @@
 • Click "🚀 Installa Sistema Completo"
 • ATTENDI: L'installer scarica Python, installa librerie, copia database
 • DURATA: 5-10 minuti (dipende da connessione internet)
-• NON CHIUDERE: Lascia lavorare l'installer
+• NON CHIUDERE: Lascia lavorare l'installer ig
 
 4. COMPLETAMENTO
 ----------------
