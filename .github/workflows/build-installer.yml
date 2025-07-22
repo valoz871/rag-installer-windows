@@ -2,7 +2,7 @@ name: Build RAG Installer EXE
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, installer-development ]  # ← AGGIUNGI QUI
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
