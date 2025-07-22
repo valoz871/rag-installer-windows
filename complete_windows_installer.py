@@ -90,112 +90,108 @@ class CompleteRAGInstaller:
         main_frame = tk.Frame(scrollable_frame, bg='#f0f8ff', padx=10, pady=15)  # Ridotto padding
         main_frame.pack(fill='both', expand=True)
         
-        # Welcome message (ridotto)
+        # Welcome message (molto più compatto)
         welcome_text = tk.Label(
             main_frame,
-            text="Benvenuto! Questo installer configurera' automaticamente tutto il necessario:\n"
-                 "✓ Scarica e installa Python (se necessario)\n"
-                 "✓ Installa tutte le librerie richieste\n" 
-                 "✓ Configura il sistema RAG completo\n"
-                 "✓ Crea collegamenti sul desktop\n"
-                 "Il processo richiede 5-10 minuti e connessione internet.",
-            font=("Arial", 10),  # Ridotto da 11 a 10
+            text="Installer automatico: Python + librerie + sistema RAG + collegamenti desktop\nRichiede 5-10 minuti e connessione internet.",
+            font=("Arial", 9),  # Più piccolo
             bg='#f0f8ff',
             fg='#374151',
             justify='left',
             wraplength=700
         )
-        welcome_text.pack(pady=10)  # Ridotto da 15 a 10
+        welcome_text.pack(pady=5)  # Molto ridotto
         
-        # Configuration section
+        # Configuration section (più compatta)
         config_frame = tk.LabelFrame(
             main_frame,
             text="⚙️ Configurazione",
-            font=("Arial", 11, "bold"),  # Ridotto da 12 a 11
+            font=("Arial", 10, "bold"),
             bg='#f0f8ff',
-            padx=12, pady=10  # Ridotto padding
+            padx=8, pady=6  # Molto ridotto
         )
-        config_frame.pack(fill='x', pady=10)  # Ridotto da 15 a 10
+        config_frame.pack(fill='x', pady=5)
         
-        # Install directory
+        # Install directory (compatto)
         tk.Label(
             config_frame,
-            text="📁 Directory di installazione:",
-            font=("Arial", 9, "bold"),  # Ridotto da 10 a 9
+            text="📁 Directory:",
+            font=("Arial", 8, "bold"),  # Più piccolo
             bg='#f0f8ff'
         ).pack(anchor='w')
         
         dir_frame = tk.Frame(config_frame, bg='#f0f8ff')
-        dir_frame.pack(fill='x', pady=3)  # Ridotto da 5 a 3
+        dir_frame.pack(fill='x', pady=2)
         
         self.dir_var = tk.StringVar(value=str(self.install_dir))
-        dir_entry = tk.Entry(dir_frame, textvariable=self.dir_var, font=("Arial", 9))  # Ridotto font
+        dir_entry = tk.Entry(dir_frame, textvariable=self.dir_var, font=("Arial", 8))
         dir_entry.pack(side='left', fill='x', expand=True)
         
-        tk.Button(dir_frame, text="📂", command=self.choose_directory, width=3).pack(side='right', padx=(5, 0))
+        tk.Button(dir_frame, text="📂", command=self.choose_directory, width=2, font=("Arial", 8)).pack(side='right', padx=(3, 0))
         
-        # Database path
+        # Database path (compatto)
         tk.Label(
             config_frame,
-            text="🗄️ Database RAG (cartella Rag_db):",
-            font=("Arial", 9, "bold"),  # Ridotto
+            text="🗄️ Database Rag_db:",
+            font=("Arial", 8, "bold"),
             bg='#f0f8ff'
-        ).pack(anchor='w', pady=(10, 0))  # Ridotto da 15 a 10
+        ).pack(anchor='w', pady=(6, 0))
         
         db_frame = tk.Frame(config_frame, bg='#f0f8ff')
-        db_frame.pack(fill='x', pady=3)
+        db_frame.pack(fill='x', pady=2)
         
         self.db_var = tk.StringVar(value="Seleziona cartella Rag_db...")
-        db_entry = tk.Entry(db_frame, textvariable=self.db_var, font=("Arial", 9))
+        db_entry = tk.Entry(db_frame, textvariable=self.db_var, font=("Arial", 8))
         db_entry.pack(side='left', fill='x', expand=True)
         
-        tk.Button(db_frame, text="📂", command=self.choose_database, width=3).pack(side='right', padx=(5, 0))
+        tk.Button(db_frame, text="📂", command=self.choose_database, width=2, font=("Arial", 8)).pack(side='right', padx=(3, 0))
         
-        # Auto-detect button
+        # Auto-detect button (più piccolo)
         tk.Button(
             config_frame,
-            text="🔍 Auto-Rileva Database",
+            text="🔍 Auto-Rileva",
             command=self.auto_detect_database,
             bg='#6366f1',
             fg='white',
-            font=("Arial", 9)
-        ).pack(pady=3)
+            font=("Arial", 8),
+            pady=2  # Molto ridotto
+        ).pack(pady=2)
         
-        # API Key
+        # API Key (compatto)
         tk.Label(
             config_frame,
-            text="🔑 OpenAI API Key:",
-            font=("Arial", 9, "bold"),
+            text="🔑 API Key OpenAI:",
+            font=("Arial", 8, "bold"),
             bg='#f0f8ff'
-        ).pack(anchor='w', pady=(10, 0))
+        ).pack(anchor='w', pady=(6, 0))
         
         self.api_entry = tk.Entry(
             config_frame,
-            font=("Arial", 10),
+            font=("Arial", 8),  # Font ridotto
             show="*",
             width=60
         )
-        self.api_entry.pack(fill='x', pady=3)
+        self.api_entry.pack(fill='x', pady=2)
         
         tk.Label(
             config_frame,
-            text="(Deve iniziare con 'sk-' - fornita dal creatore del sistema)",
-            font=("Arial", 8),  # Ridotto font
+            text="(Inizia con 'sk-')",
+            font=("Arial", 7),  # Molto piccolo
             fg="gray",
             bg='#f0f8ff'
         ).pack(anchor='w')
         
-        # Install button
+        # Install button (più compatto ma visibile)
         button_frame = tk.Frame(main_frame, bg='#f0f8ff')
-        button_frame.pack(fill='x', pady=15)  # Ridotto da 20 a 15
+        button_frame.pack(fill='x', pady=8)  # Ridotto
         
         self.install_button = tk.Button(
             button_frame,
             text="🚀 Installa Sistema Completo",
-            font=("Arial", 14, "bold"),
+            font=("Arial", 11, "bold"),  # Ridotto da 14 a 11
             bg='#059669',
             fg='white',
-            pady=10,  # Ridotto da 15 a 10
+            pady=6,  # Molto ridotto
             command=self.start_installation
         )
         self.install_button.pack(side='left', fill='x', expand=True)
@@ -203,56 +199,56 @@ class CompleteRAGInstaller:
         self.cancel_button = tk.Button(
             button_frame,
             text="❌ Annulla",
-            font=("Arial", 11),  # Ridotto da 12 a 11
+            font=("Arial", 9),  # Ridotto
             bg='#dc2626',
             fg='white',
-            pady=10,
+            pady=6,
             command=self.cancel_installation,
             state='disabled'
         )
-        self.cancel_button.pack(side='right', padx=(10, 0))  # Ridotto da 15 a 10
+        self.cancel_button.pack(side='right', padx=(8, 0))
         
-        # Progress section
+        # Progress section (più compatto)
         progress_frame = tk.LabelFrame(
             main_frame,
             text="📊 Progresso",
-            font=("Arial", 10, "bold"),  # Ridotto font
+            font=("Arial", 9, "bold"),
             bg='#f0f8ff'
         )
-        progress_frame.pack(fill='x', pady=10)  # Ridotto da 15 a 10
+        progress_frame.pack(fill='x', pady=6)
         
         self.progress_bar = ttk.Progressbar(
             progress_frame,
             mode='determinate',
             length=700
         )
-        self.progress_bar.pack(pady=8, padx=15)  # Ridotto da 10 a 8
+        self.progress_bar.pack(pady=4, padx=10)  # Ridotto
         
         self.status_label = tk.Label(
             progress_frame,
             text="Pronto per l'installazione...",
-            font=("Arial", 9),  # Ridotto font
+            font=("Arial", 8),  # Font ridotto
             bg='#f0f8ff',
             fg='#374151'
         )
-        self.status_label.pack(pady=(0, 8))  # Ridotto
+        self.status_label.pack(pady=(0, 4))
         
-        # Log area (più compatta)
+        # Log area - MOLTO PIU' GRANDE E VISIBILE
         log_frame = tk.LabelFrame(
             main_frame,
             text="📋 Log Dettagliato",
-            font=("Arial", 10, "bold"),
+            font=("Arial", 9, "bold"),
             bg='#f0f8ff'
         )
-        log_frame.pack(fill='both', expand=True, pady=8)  # Ridotto da 10 a 8
+        log_frame.pack(fill='both', expand=True, pady=5)
         
         log_container = tk.Frame(log_frame)
-        log_container.pack(fill='both', expand=True, padx=8, pady=8)  # Ridotto padding
+        log_container.pack(fill='both', expand=True, padx=6, pady=6)
         
         self.log_text = tk.Text(
             log_container,
-            height=6,  # Ridotto da 8 a 6
-            font=("Courier", 8),  # Ridotto font
+            height=12,  # AUMENTATO da 6 a 12 righe
+            font=("Courier", 7),  # Font più piccolo per vedere più testo
             bg='#ffffff',
             fg='#000000',
             wrap='word'
