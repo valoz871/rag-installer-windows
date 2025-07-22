@@ -47,73 +47,89 @@ class CompleteRAGInstaller:
         """Create installer GUI"""
         
         # Header
-        header_frame = tk.Frame(self.root, bg='#1e3a8a', height=100)
+        header_frame = tk.Frame(self.root, bg='#1e3a8a', height=80)  # Ridotto da 100 a 80
         header_frame.pack(fill='x')
         header_frame.pack_propagate(False)
         
         title_label = tk.Label(
             header_frame,
             text="Sistema RAG Psicologia",
-            font=("Arial", 24, "bold"),
+            font=("Arial", 20, "bold"),  # Ridotto da 24 a 20
             fg="white",
             bg='#1e3a8a'
         )
-        title_label.pack(pady=15)
+        title_label.pack(pady=10)  # Ridotto da 15 a 10
         
         subtitle_label = tk.Label(
             header_frame,
             text="Installer Automatico Completo per Windows",
-            font=("Arial", 12),
+            font=("Arial", 10),  # Ridotto da 12 a 10
             fg="#a5b4fc", 
             bg='#1e3a8a'
         )
         subtitle_label.pack()
         
-        # Main content
-        main_frame = tk.Frame(self.root, bg='#f0f8ff', padx=30, pady=20)
+        # SCROLLABLE MAIN CONTENT - FIX PER RISOLUZIONI PICCOLE
+        canvas = tk.Canvas(self.root, bg='#f0f8ff')
+        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg='#f0f8ff')
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Pack scrollbar and canvas
+        canvas.pack(side="left", fill="both", expand=True, padx=20)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Main content (ora dentro scrollable_frame invece di main_frame)
+        main_frame = tk.Frame(scrollable_frame, bg='#f0f8ff', padx=10, pady=15)  # Ridotto padding
         main_frame.pack(fill='both', expand=True)
         
-        # Welcome message
+        # Welcome message (ridotto)
         welcome_text = tk.Label(
             main_frame,
-            text="Benvenuto! Questo installer configurera' automaticamente tutto il necessario:\n\n"
+            text="Benvenuto! Questo installer configurera' automaticamente tutto il necessario:\n"
                  "✓ Scarica e installa Python (se necessario)\n"
                  "✓ Installa tutte le librerie richieste\n" 
                  "✓ Configura il sistema RAG completo\n"
-                 "✓ Crea collegamenti sul desktop\n\n"
+                 "✓ Crea collegamenti sul desktop\n"
                  "Il processo richiede 5-10 minuti e connessione internet.",
-            font=("Arial", 11),
+            font=("Arial", 10),  # Ridotto da 11 a 10
             bg='#f0f8ff',
             fg='#374151',
             justify='left',
             wraplength=700
         )
-        welcome_text.pack(pady=15)
+        welcome_text.pack(pady=10)  # Ridotto da 15 a 10
         
         # Configuration section
         config_frame = tk.LabelFrame(
             main_frame,
             text="⚙️ Configurazione",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 11, "bold"),  # Ridotto da 12 a 11
             bg='#f0f8ff',
-            padx=15,
-            pady=15
+            padx=12, pady=10  # Ridotto padding
         )
-        config_frame.pack(fill='x', pady=15)
+        config_frame.pack(fill='x', pady=10)  # Ridotto da 15 a 10
         
         # Install directory
         tk.Label(
             config_frame,
             text="📁 Directory di installazione:",
-            font=("Arial", 10, "bold"),
+            font=("Arial", 9, "bold"),  # Ridotto da 10 a 9
             bg='#f0f8ff'
         ).pack(anchor='w')
         
         dir_frame = tk.Frame(config_frame, bg='#f0f8ff')
-        dir_frame.pack(fill='x', pady=5)
+        dir_frame.pack(fill='x', pady=3)  # Ridotto da 5 a 3
         
         self.dir_var = tk.StringVar(value=str(self.install_dir))
-        dir_entry = tk.Entry(dir_frame, textvariable=self.dir_var, font=("Arial", 10))
+        dir_entry = tk.Entry(dir_frame, textvariable=self.dir_var, font=("Arial", 9))  # Ridotto font
         dir_entry.pack(side='left', fill='x', expand=True)
         
         tk.Button(dir_frame, text="📂", command=self.choose_directory, width=3).pack(side='right', padx=(5, 0))
@@ -122,15 +138,15 @@ class CompleteRAGInstaller:
         tk.Label(
             config_frame,
             text="🗄️ Database RAG (cartella Rag_db):",
-            font=("Arial", 10, "bold"),
+            font=("Arial", 9, "bold"),  # Ridotto
             bg='#f0f8ff'
-        ).pack(anchor='w', pady=(15, 0))
+        ).pack(anchor='w', pady=(10, 0))  # Ridotto da 15 a 10
         
         db_frame = tk.Frame(config_frame, bg='#f0f8ff')
-        db_frame.pack(fill='x', pady=5)
+        db_frame.pack(fill='x', pady=3)
         
         self.db_var = tk.StringVar(value="Seleziona cartella Rag_db...")
-        db_entry = tk.Entry(db_frame, textvariable=self.db_var, font=("Arial", 10))
+        db_entry = tk.Entry(db_frame, textvariable=self.db_var, font=("Arial", 9))
         db_entry.pack(side='left', fill='x', expand=True)
         
         tk.Button(db_frame, text="📂", command=self.choose_database, width=3).pack(side='right', padx=(5, 0))
@@ -142,44 +158,44 @@ class CompleteRAGInstaller:
             command=self.auto_detect_database,
             bg='#6366f1',
             fg='white',
-            font=("Arial", 10)
-        ).pack(pady=5)
+            font=("Arial", 9)
+        ).pack(pady=3)
         
         # API Key
         tk.Label(
             config_frame,
             text="🔑 OpenAI API Key:",
-            font=("Arial", 10, "bold"),
+            font=("Arial", 9, "bold"),
             bg='#f0f8ff'
-        ).pack(anchor='w', pady=(15, 0))
+        ).pack(anchor='w', pady=(10, 0))
         
         self.api_entry = tk.Entry(
             config_frame,
-            font=("Arial", 11),
+            font=("Arial", 10),
             show="*",
             width=60
         )
-        self.api_entry.pack(fill='x', pady=5)
+        self.api_entry.pack(fill='x', pady=3)
         
         tk.Label(
             config_frame,
             text="(Deve iniziare con 'sk-' - fornita dal creatore del sistema)",
-            font=("Arial", 9),
+            font=("Arial", 8),  # Ridotto font
             fg="gray",
             bg='#f0f8ff'
         ).pack(anchor='w')
         
         # Install button
         button_frame = tk.Frame(main_frame, bg='#f0f8ff')
-        button_frame.pack(fill='x', pady=20)
+        button_frame.pack(fill='x', pady=15)  # Ridotto da 20 a 15
         
         self.install_button = tk.Button(
             button_frame,
             text="🚀 Installa Sistema Completo",
-            font=("Arial", 16, "bold"),
+            font=("Arial", 14, "bold"),
             bg='#059669',
             fg='white',
-            pady=15,
+            pady=10,  # Ridotto da 15 a 10
             command=self.start_installation
         )
         self.install_button.pack(side='left', fill='x', expand=True)
@@ -187,56 +203,56 @@ class CompleteRAGInstaller:
         self.cancel_button = tk.Button(
             button_frame,
             text="❌ Annulla",
-            font=("Arial", 12),
+            font=("Arial", 11),  # Ridotto da 12 a 11
             bg='#dc2626',
             fg='white',
-            pady=15,
+            pady=10,
             command=self.cancel_installation,
             state='disabled'
         )
-        self.cancel_button.pack(side='right', padx=(15, 0))
+        self.cancel_button.pack(side='right', padx=(10, 0))  # Ridotto da 15 a 10
         
         # Progress section
         progress_frame = tk.LabelFrame(
             main_frame,
             text="📊 Progresso",
-            font=("Arial", 11, "bold"),
+            font=("Arial", 10, "bold"),  # Ridotto font
             bg='#f0f8ff'
         )
-        progress_frame.pack(fill='x', pady=15)
+        progress_frame.pack(fill='x', pady=10)  # Ridotto da 15 a 10
         
         self.progress_bar = ttk.Progressbar(
             progress_frame,
             mode='determinate',
             length=700
         )
-        self.progress_bar.pack(pady=10, padx=15)
+        self.progress_bar.pack(pady=8, padx=15)  # Ridotto da 10 a 8
         
         self.status_label = tk.Label(
             progress_frame,
             text="Pronto per l'installazione...",
-            font=("Arial", 10),
+            font=("Arial", 9),  # Ridotto font
             bg='#f0f8ff',
             fg='#374151'
         )
-        self.status_label.pack(pady=(0, 10))
+        self.status_label.pack(pady=(0, 8))  # Ridotto
         
-        # Log area
+        # Log area (più compatta)
         log_frame = tk.LabelFrame(
             main_frame,
             text="📋 Log Dettagliato",
-            font=("Arial", 11, "bold"),
+            font=("Arial", 10, "bold"),
             bg='#f0f8ff'
         )
-        log_frame.pack(fill='both', expand=True, pady=10)
+        log_frame.pack(fill='both', expand=True, pady=8)  # Ridotto da 10 a 8
         
         log_container = tk.Frame(log_frame)
-        log_container.pack(fill='both', expand=True, padx=10, pady=10)
+        log_container.pack(fill='both', expand=True, padx=8, pady=8)  # Ridotto padding
         
         self.log_text = tk.Text(
             log_container,
-            height=8,
-            font=("Courier", 9),
+            height=6,  # Ridotto da 8 a 6
+            font=("Courier", 8),  # Ridotto font
             bg='#ffffff',
             fg='#000000',
             wrap='word'
@@ -247,6 +263,11 @@ class CompleteRAGInstaller:
         
         self.log_text.pack(side="left", fill="both", expand=True)
         log_scrollbar.pack(side="right", fill="y")
+        
+        # Bind mousewheel to canvas for scrolling
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
     
     def choose_directory(self):
         """Choose installation directory"""
